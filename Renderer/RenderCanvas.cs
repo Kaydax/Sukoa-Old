@@ -11,17 +11,21 @@ namespace Sukoa.Renderer
   {
     public RenderCanvas(ResourceFactory factory, int width, int height)
     {
-      Texture = factory.CreateTexture(TextureDescription.Texture2D(1024, 1024, 1, 1, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.RenderTarget | TextureUsage.Sampled)); ;
-      FrameBuffer = factory.CreateFramebuffer(new FramebufferDescription(null, Texture));
       Width = width;
       Height = height;
 
+      Texture = factory.CreateTexture(TextureDescription.Texture2D(1024, 1024, 1, 1, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.RenderTarget | TextureUsage.Sampled)); ;
+      TextureView = factory.CreateTextureView(Texture);
+      FrameBuffer = factory.CreateFramebuffer(new FramebufferDescription(null, Texture));
+
       dispose.Add(Texture);
+      dispose.Add(TextureView);
       dispose.Add(FrameBuffer);
     }
 
     public Texture Texture { get; }
     public Framebuffer FrameBuffer { get; }
+    public TextureView TextureView { get; }
     public int Width { get; }
     public int Height { get; }
 

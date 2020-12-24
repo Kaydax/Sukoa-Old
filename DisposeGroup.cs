@@ -29,6 +29,13 @@ namespace Sukoa
       return item;
     }
 
+    public T[] AddArray<T>(T[] itemlist) where T : IDisposable
+    {
+      if (disposed) throw new Exception("Can't add items to a disposed DisposeGroup");
+      foreach (var i in itemlist) items.Add(i);
+      return itemlist;
+    }
+
     public T Replace<T>(T prevItem, T newItem) where T : IDisposable
     {
       if (disposed) throw new Exception("Can't add items to a disposed DisposeGroup");

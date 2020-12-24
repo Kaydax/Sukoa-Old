@@ -13,7 +13,7 @@ using Veldrid.SPIRV;
 
 namespace Sukoa.Renderer
 {
-  public class ImGuiView
+  public class ImGuiView : IDisposable
   {
     private GraphicsDevice _gd;
     private bool _frameBegun;

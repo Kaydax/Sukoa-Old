@@ -7,10 +7,11 @@ using Veldrid;
 
 namespace Sukoa.UI
 {
-  public interface IUIComponent : IDisposable
+  public abstract class UIComponent : IUIComponent
   {
-    void Render(CommandList cl);
-    new void Dispose()
+    public virtual void Dispose()
     { }
+
+    public abstract void Render(CommandList cl);
   }
 }

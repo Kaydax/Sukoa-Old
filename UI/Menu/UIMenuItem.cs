@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ImGuiNET;
+using Veldrid;
 
 namespace Sukoa.UI
 {
-  public class UIMenuItem : IUIComponent
+  public class UIMenuItem : UIComponent
   {
     public UIMenuItem(string label, string shortcut = null)
     {
@@ -18,9 +19,9 @@ namespace Sukoa.UI
     public String Label { get; set; }
     public String Shortcut { get; set; }
 
-    public void Render()
+    public override void Render(CommandList cl)
     {
-      if(ImGui.MenuItem(Label, Shortcut)) {}
+      if (ImGui.MenuItem(Label, Shortcut)) { }
     }
   }
 }

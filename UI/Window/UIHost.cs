@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Veldrid;
 
 namespace Sukoa.UI
 {
-  public interface IUIContainer : IUIComponent,  IDisposable
+  public class UIHost : UIContainer
   {
-    List<IUIComponent> Children { get; }
+    public override void Render(CommandList cl)
+    {
+      RenderChildren(cl);
+    }
   }
 }

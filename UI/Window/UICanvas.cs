@@ -6,39 +6,61 @@ using System.Threading.Tasks;
 using Sukoa.Renderer;
 using Veldrid;
 using ImGuiNET;
+using System.Numerics;
 
 namespace Sukoa.UI
 {
   public abstract class UICanvas : IUIComponent, IDisposable
   {
-    RenderCanvas Canvas { get; set; }
+    public RenderCanvas Canvas { get; private set; }
     ImGuiView ImGuiView { get; }
+    Func<Vector2> ComputeSize { get; }
+
+    ResourceFactory Factory { get; }
 
     DisposeGroup dispose = new DisposeGroup();
+    IntPtr imageBind;
 
-    protected UICanvas(ImGuiView imGuiView)
+
+    protected UICanvas(ResourceFactory factory, ImGuiView imGuiView, Func<Vector2> computeSize)
     {
+      ComputeSize = computeSize;
       ImGuiView = imGuiView;
+      Factory = factory;
+
+      Canvas = MakeCanvasFrom(8, 8);
+      imageBind = ImGuiView.GetOrCreateImGuiBinding(Factory, Canvas.TextureView);
     }
 
-    public void Render()
+    public void Render(CommandList cl)
     {
-      float imageSizeX = ImGui.GetWindowSize().X;
-      float imageSizeY = ImGui.GetWindowSize().Y;
+      var imgSize = ComputeSize();
 
-      int IntImageSizeX = (int)Math.Floor(imageSizeX);
-      int IntImageSizeY = (int)Math.Floor(imageSizeY);
+      int IntImageSizeX = (int)Math.Floor(imgSize.X);
+      int IntImageSizeY = (int)Math.Floor(imgSize.Y);
 
-      if(Canvas.Width != IntImageSizeX || Canvas.Height != IntImageSizeY)
+      if (Canvas.Width != IntImageSizeX || Canvas.Height != IntImageSizeY)
       {
-        Canvas = dispose.Replace(Canvas, new RenderCanvas(gd.ResourceFactory, IntImageSizeX, IntImageSizeY));
-        imageBind = imGui.GetOrCreateImGuiBinding(gd.ResourceFactory, Canvas.Texture);
+        Canvas = MakeCanvasFrom(IntImageSizeX, IntImageSizeY);
+        imageBind = ImGuiView.GetOrCreateImGuiBinding(Factory, Canvas.TextureView);
       }
+
+      RenderToCanvas(cl);
+      ImGui.Image(imageBind, imgSize);
     }
+
+    protected abstract void RenderToCanvas(CommandList cl);
 
     public void Dispose()
     {
-      throw new NotImplementedException();
+      dispose.Dispose();
+    }
+
+
+    // Helper functions
+    RenderCanvas MakeCanvasFrom(int width, int height)
+    {
+      return dispose.Replace(Canvas, new RenderCanvas(Factory, width, height));
     }
   }
 }

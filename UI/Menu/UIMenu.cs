@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ImGuiNET;
+using Veldrid;
 
 namespace Sukoa.UI
 {
@@ -16,11 +17,11 @@ namespace Sukoa.UI
 
     public String Label { get; set; }
 
-    public override void Render()
+    public override void Render(CommandList cl)
     {
-      if(ImGui.BeginMenu(Label))
+      if (ImGui.BeginMenu(Label))
       {
-        RenderChildren();
+        RenderChildren(cl);
         ImGui.EndMenu();
       }
     }

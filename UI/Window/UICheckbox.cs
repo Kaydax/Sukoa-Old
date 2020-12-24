@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ImGuiNET;
+using Veldrid;
 
 namespace Sukoa.UI
 {
-  public class UICheckbox : IUIComponent
+  public class UICheckbox : UIComponent
   {
     public UICheckbox(string label, UIProperty<bool> @checked)
     {
@@ -17,18 +18,18 @@ namespace Sukoa.UI
 
     public UICheckbox(string label, bool @checked) : this(label, new UIValueProperty<bool>(@checked))
     {
-      
+
     }
 
     public String Label { get; set; }
     public UIProperty<bool> Checked { get; set; } = new UIValueProperty<bool>(false);
 
-    public void Render()
+    public override void Render(CommandList cl)
     {
       var check = Checked.Value;
 
       ImGui.Checkbox(Label, ref check);
-      if(check != Checked.Value) Checked.Set(check);
+      if (check != Checked.Value) Checked.Set(check);
     }
   }
 }

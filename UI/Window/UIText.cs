@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ImGuiNET;
+using Veldrid;
 
 namespace Sukoa.UI
 {
-  public class UIText : IUIComponent
+  public class UIText : UIComponent
   {
     public UIText(string text)
     {
@@ -16,7 +17,7 @@ namespace Sukoa.UI
 
     public String Text { get; set; }
 
-    public void Render()
+    public override void Render(CommandList cl)
     {
       ImGui.Text(Text);
     }
