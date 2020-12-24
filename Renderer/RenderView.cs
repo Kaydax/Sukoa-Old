@@ -36,6 +36,11 @@ namespace Sukoa.Renderer
       };
 
       GraphicsDevice = dispose.Add(VeldridStartup.CreateGraphicsDevice(Window, options, GraphicsBackend.Vulkan));
+
+      Window.Resized += () =>
+      {
+        GraphicsDevice.MainSwapchain.Resize((uint)Window.Width, (uint)Window.Height);
+      };
     }
 
     public void Dispose()

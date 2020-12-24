@@ -24,12 +24,8 @@ namespace Sukoa
       var gd = view.GraphicsDevice;
 
       var cl = gd.ResourceFactory.CreateCommandList();
+
       var imGui = new ImGuiView(gd, gd.MainSwapchain.Framebuffer.OutputDescription, window.Width, window.Height);
-      window.Resized += () =>
-      {
-        gd.MainSwapchain.Resize((uint)window.Width, (uint)window.Height);
-        imGui.WindowResized(window.Width, window.Height);
-      };
 
       // Initialize imgui UI
       var uihost = new UIHost();
@@ -58,7 +54,7 @@ namespace Sukoa
       {
         InputSnapshot snapshot = window.PumpEvents();
         if (!window.Exists) { break; }
-        imGui.Update(1f / 60f, snapshot);
+        imGui.Update(1f / 60f, snapshot, window.Width, window.Height);
 
         cl.Begin();
 

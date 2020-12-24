@@ -38,8 +38,6 @@ namespace Sukoa.Renderer
     private bool _altDown;
     private bool _winKeyDown;
 
-    private int _windowWidth;
-    private int _windowHeight;
     private Vector2 _scaleFactor = Vector2.One;
 
     // Image trackers
@@ -57,8 +55,6 @@ namespace Sukoa.Renderer
     public ImGuiView(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
     {
       _gd = gd;
-      _windowWidth = width;
-      _windowHeight = height;
 
       IntPtr context = ImGui.CreateContext();
       ImGui.SetCurrentContext(context);
@@ -68,16 +64,10 @@ namespace Sukoa.Renderer
       CreateDeviceResources(gd, outputDescription);
       SetKeyMappings();
 
-      SetPerFrameImGuiData(1f / 60f);
+      SetPerFrameImGuiData(1f / 60f, width, height);
 
       ImGui.NewFrame();
       _frameBegun = true;
-    }
-
-    public void WindowResized(int width, int height)
-    {
-      _windowWidth = width;
-      _windowHeight = height;
     }
 
     public void DestroyDeviceObjects()
@@ -299,14 +289,14 @@ namespace Sukoa.Renderer
     /// <summary>
     /// Updates ImGui input and IO configuration state.
     /// </summary>
-    public void Update(float deltaSeconds, InputSnapshot snapshot)
+    public void Update(float deltaSeconds, InputSnapshot snapshot, float width, float height)
     {
       if(_frameBegun)
       {
         ImGui.Render();
       }
 
-      SetPerFrameImGuiData(deltaSeconds);
+      SetPerFrameImGuiData(deltaSeconds, width, height);
       UpdateImGuiInput(snapshot);
 
       _frameBegun = true;
@@ -317,12 +307,12 @@ namespace Sukoa.Renderer
     /// Sets per-frame data based on the associated window.
     /// This is called by Update(float).
     /// </summary>
-    private void SetPerFrameImGuiData(float deltaSeconds)
+    private void SetPerFrameImGuiData(float deltaSeconds, float width, float height)
     {
       ImGuiIOPtr io = ImGui.GetIO();
       io.DisplaySize = new Vector2(
-          _windowWidth / _scaleFactor.X,
-          _windowHeight / _scaleFactor.Y);
+          width / _scaleFactor.X,
+          height / _scaleFactor.Y);
       io.DisplayFramebufferScale = _scaleFactor;
       io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
     }
