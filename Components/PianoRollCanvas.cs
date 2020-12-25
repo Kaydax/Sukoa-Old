@@ -9,10 +9,11 @@ using Veldrid;
 using Veldrid.SPIRV;
 using System.Numerics;
 using ImGuiNET;
+using Sukoa.MIDI;
 
-namespace Sukoa
+namespace Sukoa.Components
 {
-  public class TestCanvas : UICanvas
+  public class PianoRollCanvas : UICanvas
   {
     struct VertexPositionColor
     {
@@ -26,14 +27,13 @@ namespace Sukoa
       public const uint SizeInBytes = 24;
     }
 
-    DeviceBuffer VertexBuffer { get; set; }
-    DeviceBuffer IndexBuffer { get; set; }
     BufferList<VertexPositionColor> Buffer { get; }
     DeviceBuffer ProjMatrix { get; set; }
     ResourceLayout Layout { get; set; }
     ResourceSet MainResourceSet { get; set; }
     Shader[] Shaders { get; set; }
     Pipeline Pipeline { get; set; }
+    MIDIPattern Pattern { get; set; }
 
     const string VertexCode = @"
       #version 450
@@ -67,30 +67,13 @@ namespace Sukoa
 
     DisposeGroup dispose = new DisposeGroup();
 
-    public TestCanvas(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize) : base(gd, view, computeSize)
+    public PianoRollCanvas(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize, MIDIPattern pattern) : base(gd, view, computeSize)
     {
-      Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6));
-
-      VertexPositionColor[] quadVertices =
-      {
-        new VertexPositionColor(new Vector2(-150f, 150f), RgbaFloat.Red),
-        new VertexPositionColor(new Vector2(150f, 150f), RgbaFloat.Green),
-        new VertexPositionColor(new Vector2(-150f, -150f), RgbaFloat.Blue),
-        new VertexPositionColor(new Vector2(150f, -150f), RgbaFloat.Yellow)
-      };
-
-      ushort[] quadIndices = { 0, 1, 2, 3 };
-
-      VertexBuffer = Factory.CreateBuffer(new BufferDescription(4 * VertexPositionColor.SizeInBytes, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
-      IndexBuffer = Factory.CreateBuffer(new BufferDescription(4 * sizeof(ushort), BufferUsage.IndexBuffer));
-      dispose.Add(VertexBuffer);
-      dispose.Add(IndexBuffer);
+      Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048));
+      Pattern = pattern;
 
       ProjMatrix = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
       dispose.Add(ProjMatrix);
-
-      GraphicsDevice.UpdateBuffer(VertexBuffer, 0, quadVertices);
-      GraphicsDevice.UpdateBuffer(IndexBuffer, 0, quadIndices);
 
       VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
         new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
@@ -159,31 +142,42 @@ namespace Sukoa
 
       GraphicsDevice.UpdateBuffer(ProjMatrix, 0, ref mvp);
 
-      // cl.SetVertexBuffer(0, VertexBuffer);
-      // cl.SetIndexBuffer(IndexBuffer, IndexFormat.UInt16);
       cl.SetPipeline(Pipeline);
       cl.SetGraphicsResourceSet(0, MainResourceSet);
-      // cl.DrawIndexed(
-      //     indexCount: 4,
-      //     instanceCount: 1,
-      //     indexStart: 0,
-      //     vertexOffset: 0,
-      //     instanceStart: 0);
 
       frame++;
       var count = (frame / 1000) % 4;
 
       Buffer.Reset();
 
-      for(int i = 0; i < count; i++)
+      //for(int i = 0; i < count; i++)
+      //{
+      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 150f + i * 100), RgbaFloat.Red));
+      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 150f + i * 100), RgbaFloat.Green));
+      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 0 + i * 100), RgbaFloat.Blue));
+
+      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 0 + i * 100), RgbaFloat.Yellow));
+      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 0 + i * 100), RgbaFloat.Blue));
+      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 150f + i * 100), RgbaFloat.Green));
+      //}
+
+      void PushQuad(float top, float right, float bottom, float left)
       {
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 150f + i * 100), RgbaFloat.Red));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 150f + i * 100), RgbaFloat.Green));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 0 + i * 100), RgbaFloat.Blue));
-        
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 0 + i * 100), RgbaFloat.Yellow));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 0 + i * 100), RgbaFloat.Blue));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 150f + i * 100), RgbaFloat.Green));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), RgbaFloat.Red));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
+
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), RgbaFloat.Yellow));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
+      }
+
+      float keyHeight = 10;
+      float noteScale = 10;
+
+      foreach(var note in Pattern.Notes)
+      {
+        PushQuad(note.Key * keyHeight, (float)(note.End * noteScale), note.Key * keyHeight + keyHeight, (float)(note.Start * noteScale));
       }
 
       Buffer.Flush(cl);

@@ -8,6 +8,8 @@ using ImGuiNET;
 using Sukoa.UI;
 using Sukoa.Renderer;
 using System.Diagnostics;
+using Sukoa.Components;
+using Sukoa.MIDI;
 
 namespace Sukoa
 {
@@ -44,7 +46,9 @@ namespace Sukoa
       uihost.Children.Add(mainmenu);
 
       var canvasWindow = dispose.Add(new UIWindow());
-      var testCanvas = new TestCanvas(gd, imGui, ImGui.GetContentRegionAvail);
+      var pattern = new MIDIPattern();
+      pattern.GenNotes();
+      var testCanvas = new PianoRollCanvas(gd, imGui, ImGui.GetContentRegionAvail, pattern);
       canvasWindow.Name = "Test canvas renderer";
       canvasWindow.Children.Add(testCanvas);
       uihost.Children.Add(canvasWindow);

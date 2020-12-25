@@ -16,17 +16,17 @@ namespace Sukoa.UI
     ImGuiView ImGuiView { get; }
     Func<Vector2> ComputeSize { get; }
 
-    ResourceFactory Factory { get; }
+    protected ResourceFactory Factory => GraphicsDevice.ResourceFactory;
+    protected GraphicsDevice GraphicsDevice { get; }
 
     DisposeGroup dispose = new DisposeGroup();
     IntPtr imageBind;
 
-
-    protected UICanvas(ResourceFactory factory, ImGuiView imGuiView, Func<Vector2> computeSize)
+    protected UICanvas(GraphicsDevice gd, ImGuiView imGuiView, Func<Vector2> computeSize)
     {
       ComputeSize = computeSize;
       ImGuiView = imGuiView;
-      Factory = factory;
+      GraphicsDevice = gd;
 
       Canvas = MakeCanvasFrom(8, 8);
       imageBind = ImGuiView.GetOrCreateImGuiBinding(Factory, Canvas.TextureView);
@@ -39,13 +39,13 @@ namespace Sukoa.UI
       int IntImageSizeX = (int)Math.Floor(imgSize.X);
       int IntImageSizeY = (int)Math.Floor(imgSize.Y);
 
-      if (Canvas.Width != IntImageSizeX || Canvas.Height != IntImageSizeY)
+      if(Canvas.Width != IntImageSizeX || Canvas.Height != IntImageSizeY)
       {
         Canvas = MakeCanvasFrom(IntImageSizeX, IntImageSizeY);
         imageBind = ImGuiView.GetOrCreateImGuiBinding(Factory, Canvas.TextureView);
       }
 
-      ImGui.Image(imageBind, imgSize);
+      ImGui.Image(imageBind, new Vector2(IntImageSizeX, IntImageSizeY));
 
       ProcessInputs();
 
@@ -63,7 +63,6 @@ namespace Sukoa.UI
     {
       dispose.Dispose();
     }
-
 
     // Helper functions
     RenderCanvas MakeCanvasFrom(int width, int height)
