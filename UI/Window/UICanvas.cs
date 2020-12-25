@@ -67,6 +67,8 @@ namespace Sukoa.UI
     // Helper functions
     RenderCanvas MakeCanvasFrom(int width, int height)
     {
+      if(width < 1) width = 1;
+      if(height < 1) height = 1;
       return dispose.Replace(Canvas, new RenderCanvas(Factory, width, height));
     }
   }
