@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Veldrid;
 using Veldrid.SPIRV;
 using System.Numerics;
+using ImGuiNET;
 
 namespace Sukoa
 {
@@ -75,7 +76,7 @@ namespace Sukoa
 
       ushort[] quadIndices = { 0, 1, 2, 3 };
 
-      VertexBuffer = factory.CreateBuffer(new BufferDescription(4 * VertexPositionColor.SizeInBytes, BufferUsage.VertexBuffer));
+      VertexBuffer = factory.CreateBuffer(new BufferDescription(4 * VertexPositionColor.SizeInBytes, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
       IndexBuffer = factory.CreateBuffer(new BufferDescription(4 * sizeof(ushort), BufferUsage.IndexBuffer));
       dispose.Add(VertexBuffer);
       dispose.Add(IndexBuffer);
@@ -118,6 +119,18 @@ namespace Sukoa
       pipelineDescription.Outputs = Canvas.FrameBuffer.OutputDescription;
 
       Pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
+    }
+
+    protected override void ProcessInputs()
+    {
+      base.ProcessInputs();
+
+      var rect = ImGui.GetItemRectSize();
+      if (ImGui.IsItemHovered())
+      {
+        Console.WriteLine(ImGui.GetMousePos() - ImGui.GetCursorStartPos() - ImGui.GetWindowPos());
+        ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+      }
     }
 
     protected override void RenderToCanvas(CommandList cl)

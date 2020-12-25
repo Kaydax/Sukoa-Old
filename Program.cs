@@ -7,6 +7,7 @@ using Veldrid.StartupUtilities;
 using ImGuiNET;
 using Sukoa.UI;
 using Sukoa.Renderer;
+using System.Diagnostics;
 
 namespace Sukoa
 {
@@ -20,12 +21,11 @@ namespace Sukoa
 
       // Initialize window and imgui
       var view = dispose.Add(new RenderView());
-      var window = view.Window;
       var gd = view.GraphicsDevice;
 
       var cl = gd.ResourceFactory.CreateCommandList();
 
-      var imGui = new ImGuiView(gd, gd.MainSwapchain.Framebuffer.OutputDescription, window.Width, window.Height);
+      var imGui = new ImGuiView(gd, gd.MainSwapchain.Framebuffer.OutputDescription, view.Width, view.Height);
 
       // Initialize imgui UI
       var uihost = new UIHost();
@@ -49,17 +49,24 @@ namespace Sukoa
       canvasWindow.Children.Add(testCanvas);
       uihost.Children.Add(canvasWindow);
 
+      Stopwatch frameTimer = new Stopwatch();
+      frameTimer.Start();
+
       // Main application loop
-      while (window.Exists)
+      while (view.Exists)
       {
-        InputSnapshot snapshot = window.PumpEvents();
-        if (!window.Exists) { break; }
-        imGui.Update(1f / 60f, snapshot, window.Width, window.Height);
+        InputSnapshot snapshot = view.Window.PumpEvents();
+        if (!view.Exists) { break; }
+        imGui.Update((float)frameTimer.Elapsed.TotalSeconds, snapshot, view.Width, view.Height);
+        frameTimer.Reset();
+        frameTimer.Start();
 
         cl.Begin();
 
         // Compute UI elements, render canvases
         uihost.Render(cl);
+
+        imGui.UpdateViewIO(view);
 
         cl.SetFramebuffer(gd.MainSwapchain.Framebuffer);
         cl.ClearColorTarget(0, new RgbaFloat(clearColor.X, clearColor.Y, clearColor.Z, 1f));

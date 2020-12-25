@@ -10,6 +10,7 @@ using ImGuiNET;
 using System.Reflection;
 using System.IO;
 using Veldrid.SPIRV;
+using Veldrid.Sdl2;
 
 namespace Sukoa.Renderer
 {
@@ -60,6 +61,7 @@ namespace Sukoa.Renderer
       ImGui.SetCurrentContext(context);
       var fonts = ImGui.GetIO().Fonts;
       ImGui.GetIO().Fonts.AddFontDefault();
+      ImGui.GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
       CreateDeviceResources(gd, outputDescription);
       SetKeyMappings();
@@ -130,7 +132,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, TextureView textureView)
     {
-      if(!_setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
+      if (!_setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
       {
         ResourceSet resourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, textureView));
         rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet);
@@ -155,7 +157,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture)
     {
-      if(!_autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
+      if (!_autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
       {
         textureView = factory.CreateTextureView(texture);
         _autoViewsByTexture.Add(texture, textureView);
@@ -170,7 +172,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public ResourceSet GetImageResourceSet(IntPtr imGuiBinding)
     {
-      if(!_viewsById.TryGetValue(imGuiBinding, out ResourceSetInfo tvi))
+      if (!_viewsById.TryGetValue(imGuiBinding, out ResourceSetInfo tvi))
       {
         throw new InvalidOperationException("No registered ImGui binding with id " + imGuiBinding.ToString());
       }
@@ -180,7 +182,7 @@ namespace Sukoa.Renderer
 
     public void ClearCachedImageResources()
     {
-      foreach(IDisposable resource in _ownedResources)
+      foreach (IDisposable resource in _ownedResources)
       {
         resource.Dispose();
       }
@@ -194,28 +196,28 @@ namespace Sukoa.Renderer
 
     private byte[] LoadEmbeddedShaderCode(ResourceFactory factory, string name, ShaderStages stage)
     {
-      switch(factory.BackendType)
+      switch (factory.BackendType)
       {
         case GraphicsBackend.Direct3D11:
-        {
-          string resourceName = name + ".hlsl.bytes";
-          return GetEmbeddedResourceBytes(resourceName);
-        }
+          {
+            string resourceName = name + ".hlsl.bytes";
+            return GetEmbeddedResourceBytes(resourceName);
+          }
         case GraphicsBackend.OpenGL:
-        {
-          string resourceName = name + ".glsl";
-          return GetEmbeddedResourceBytes(resourceName);
-        }
+          {
+            string resourceName = name + ".glsl";
+            return GetEmbeddedResourceBytes(resourceName);
+          }
         case GraphicsBackend.Vulkan:
-        {
-          string resourceName = name + ".spv";
-          return GetEmbeddedResourceBytes(resourceName);
-        }
+          {
+            string resourceName = name + ".spv";
+            return GetEmbeddedResourceBytes(resourceName);
+          }
         case GraphicsBackend.Metal:
-        {
-          string resourceName = name + ".metallib";
-          return GetEmbeddedResourceBytes(resourceName);
-        }
+          {
+            string resourceName = name + ".metallib";
+            return GetEmbeddedResourceBytes(resourceName);
+          }
         default:
           throw new NotImplementedException();
       }
@@ -224,7 +226,7 @@ namespace Sukoa.Renderer
     private byte[] GetEmbeddedResourceBytes(string resourceName)
     {
       Assembly assembly = typeof(ImGuiView).Assembly;
-      using(Stream s = assembly.GetManifestResourceStream(resourceName))
+      using (Stream s = assembly.GetManifestResourceStream(resourceName))
       {
         byte[] ret = new byte[s.Length];
         s.Read(ret, 0, (int)s.Length);
@@ -278,7 +280,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public void Render(GraphicsDevice gd, CommandList cl)
     {
-      if(_frameBegun)
+      if (_frameBegun)
       {
         _frameBegun = false;
         ImGui.Render();
@@ -291,7 +293,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public void Update(float deltaSeconds, InputSnapshot snapshot, float width, float height)
     {
-      if(_frameBegun)
+      if (_frameBegun)
       {
         ImGui.Render();
       }
@@ -327,11 +329,11 @@ namespace Sukoa.Renderer
       bool leftPressed = false;
       bool middlePressed = false;
       bool rightPressed = false;
-      foreach(MouseEvent me in snapshot.MouseEvents)
+      foreach (MouseEvent me in snapshot.MouseEvents)
       {
-        if(me.Down)
+        if (me.Down)
         {
-          switch(me.MouseButton)
+          switch (me.MouseButton)
           {
             case MouseButton.Left:
               leftPressed = true;
@@ -353,30 +355,30 @@ namespace Sukoa.Renderer
       io.MouseWheel = snapshot.WheelDelta;
 
       IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
-      for(int i = 0; i < keyCharPresses.Count; i++)
+      for (int i = 0; i < keyCharPresses.Count; i++)
       {
         char c = keyCharPresses[i];
         io.AddInputCharacter(c);
       }
 
       IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
-      for(int i = 0; i < keyEvents.Count; i++)
+      for (int i = 0; i < keyEvents.Count; i++)
       {
         KeyEvent keyEvent = keyEvents[i];
         io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
-        if(keyEvent.Key == Key.ControlLeft)
+        if (keyEvent.Key == Key.ControlLeft)
         {
           _controlDown = keyEvent.Down;
         }
-        if(keyEvent.Key == Key.ShiftLeft)
+        if (keyEvent.Key == Key.ShiftLeft)
         {
           _shiftDown = keyEvent.Down;
         }
-        if(keyEvent.Key == Key.AltLeft)
+        if (keyEvent.Key == Key.AltLeft)
         {
           _altDown = keyEvent.Down;
         }
-        if(keyEvent.Key == Key.WinLeft)
+        if (keyEvent.Key == Key.WinLeft)
         {
           _winKeyDown = keyEvent.Down;
         }
@@ -418,26 +420,26 @@ namespace Sukoa.Renderer
       uint vertexOffsetInVertices = 0;
       uint indexOffsetInElements = 0;
 
-      if(draw_data.CmdListsCount == 0)
+      if (draw_data.CmdListsCount == 0)
       {
         return;
       }
 
       uint totalVBSize = (uint)(draw_data.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
-      if(totalVBSize > _vertexBuffer.SizeInBytes)
+      if (totalVBSize > _vertexBuffer.SizeInBytes)
       {
         gd.DisposeWhenIdle(_vertexBuffer);
         _vertexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(totalVBSize * 1.5f), BufferUsage.VertexBuffer | BufferUsage.Dynamic));
       }
 
       uint totalIBSize = (uint)(draw_data.TotalIdxCount * sizeof(ushort));
-      if(totalIBSize > _indexBuffer.SizeInBytes)
+      if (totalIBSize > _indexBuffer.SizeInBytes)
       {
         gd.DisposeWhenIdle(_indexBuffer);
         _indexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(totalIBSize * 1.5f), BufferUsage.IndexBuffer | BufferUsage.Dynamic));
       }
 
-      for(int i = 0; i < draw_data.CmdListsCount; i++)
+      for (int i = 0; i < draw_data.CmdListsCount; i++)
       {
         ImDrawListPtr cmd_list = draw_data.CmdListsRange[i];
 
@@ -479,21 +481,21 @@ namespace Sukoa.Renderer
       // Render command lists
       int vtx_offset = 0;
       int idx_offset = 0;
-      for(int n = 0; n < draw_data.CmdListsCount; n++)
+      for (int n = 0; n < draw_data.CmdListsCount; n++)
       {
         ImDrawListPtr cmd_list = draw_data.CmdListsRange[n];
-        for(int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
+        for (int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
         {
           ImDrawCmdPtr pcmd = cmd_list.CmdBuffer[cmd_i];
-          if(pcmd.UserCallback != IntPtr.Zero)
+          if (pcmd.UserCallback != IntPtr.Zero)
           {
             throw new NotImplementedException();
           }
           else
           {
-            if(pcmd.TextureId != IntPtr.Zero)
+            if (pcmd.TextureId != IntPtr.Zero)
             {
-              if(pcmd.TextureId == _fontAtlasID)
+              if (pcmd.TextureId == _fontAtlasID)
               {
                 cl.SetGraphicsResourceSet(1, _fontTextureResourceSet);
               }
@@ -519,6 +521,13 @@ namespace Sukoa.Renderer
       }
     }
 
+    public void UpdateViewIO(RenderView view)
+    {
+      var cursor = ImGui.GetMouseCursor();
+      var renderCursor = ImGuiEnumMap.Cursor(cursor);
+      view.SetCursor(renderCursor ?? SDL_SystemCursor.Arrow);
+    }
+
     /// <summary>
     /// Frees all graphics resources used by the renderer.
     /// </summary>
@@ -536,7 +545,7 @@ namespace Sukoa.Renderer
       _pipeline.Dispose();
       _mainResourceSet.Dispose();
 
-      foreach(IDisposable resource in _ownedResources)
+      foreach (IDisposable resource in _ownedResources)
       {
         resource.Dispose();
       }
@@ -554,5 +563,23 @@ namespace Sukoa.Renderer
       }
     }
 
+  }
+
+  static class ImGuiEnumMap
+  {
+    public static SDL_SystemCursor? Cursor(ImGuiMouseCursor cursor)
+    {
+      switch (cursor)
+      {
+        case ImGuiMouseCursor.Arrow: return SDL_SystemCursor.Arrow;
+        case ImGuiMouseCursor.Hand: return SDL_SystemCursor.Hand;
+        case ImGuiMouseCursor.ResizeAll: return SDL_SystemCursor.SizeAll;
+        case ImGuiMouseCursor.ResizeNESW: return SDL_SystemCursor.SizeNESW;
+        case ImGuiMouseCursor.ResizeNS: return SDL_SystemCursor.SizeNS;
+        case ImGuiMouseCursor.ResizeNWSE: return SDL_SystemCursor.SizeNWSE;
+        case ImGuiMouseCursor.ResizeEW: return SDL_SystemCursor.SizeWE;
+        default: return null;
+      }
+    }
   }
 }

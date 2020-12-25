@@ -9,10 +9,19 @@ using Veldrid.StartupUtilities;
 
 namespace Sukoa.Renderer
 {
-  public class RenderView : IDisposable
+  public class RenderView : IDisposable, IRenderSize, IRenderTarget
   {
     public GraphicsDevice GraphicsDevice { get; }
     public Sdl2Window Window { get; }
+
+    public int Width => Window.Width;
+    public int Height => Window.Height;
+
+    public bool Exists => Window.Exists;
+
+    public Framebuffer FrameBuffer => GraphicsDevice.SwapchainFramebuffer;
+
+    Dictionary<SDL_SystemCursor, SDL_Cursor> cursorMap = new Dictionary<SDL_SystemCursor, SDL_Cursor>();
 
     DisposeGroup dispose = new DisposeGroup();
 
@@ -35,12 +44,35 @@ namespace Sukoa.Renderer
         PreferDepthRangeZeroToOne = true
       };
 
+      void CreateAndAddCursor(SDL_SystemCursor type)
+      {
+        var cursor = Sdl2Native.SDL_CreateSystemCursor(type);
+        cursorMap.Add(type, cursor);
+      }
+      CreateAndAddCursor(SDL_SystemCursor.Arrow);
+      CreateAndAddCursor(SDL_SystemCursor.Crosshair);
+      CreateAndAddCursor(SDL_SystemCursor.Hand);
+      CreateAndAddCursor(SDL_SystemCursor.IBeam);
+      CreateAndAddCursor(SDL_SystemCursor.No);
+      CreateAndAddCursor(SDL_SystemCursor.SizeAll);
+      CreateAndAddCursor(SDL_SystemCursor.SizeNESW);
+      CreateAndAddCursor(SDL_SystemCursor.SizeNS);
+      CreateAndAddCursor(SDL_SystemCursor.SizeNWSE);
+      CreateAndAddCursor(SDL_SystemCursor.SizeWE);
+      CreateAndAddCursor(SDL_SystemCursor.Wait);
+      CreateAndAddCursor(SDL_SystemCursor.WaitArrow);
+
       GraphicsDevice = dispose.Add(VeldridStartup.CreateGraphicsDevice(Window, options, GraphicsBackend.Vulkan));
 
       Window.Resized += () =>
       {
         GraphicsDevice.MainSwapchain.Resize((uint)Window.Width, (uint)Window.Height);
       };
+    }
+
+    public void SetCursor(SDL_SystemCursor cursor)
+    {
+      Sdl2Native.SDL_SetCursor(cursorMap[cursor]);
     }
 
     public void Dispose()

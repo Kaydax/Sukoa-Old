@@ -32,7 +32,7 @@ namespace Sukoa.UI
       imageBind = ImGuiView.GetOrCreateImGuiBinding(Factory, Canvas.TextureView);
     }
 
-    public void Render(CommandList cl)
+    public virtual void Render(CommandList cl)
     {
       var imgSize = ComputeSize();
 
@@ -45,8 +45,16 @@ namespace Sukoa.UI
         imageBind = ImGuiView.GetOrCreateImGuiBinding(Factory, Canvas.TextureView);
       }
 
-      RenderToCanvas(cl);
       ImGui.Image(imageBind, imgSize);
+
+      ProcessInputs();
+
+      RenderToCanvas(cl);
+    }
+
+    protected virtual void ProcessInputs()
+    {
+
     }
 
     protected abstract void RenderToCanvas(CommandList cl);
