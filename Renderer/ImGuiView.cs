@@ -132,7 +132,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, TextureView textureView)
     {
-      if (!_setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
+      if(!_setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
       {
         ResourceSet resourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, textureView));
         rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet);
@@ -157,7 +157,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture)
     {
-      if (!_autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
+      if(!_autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
       {
         textureView = factory.CreateTextureView(texture);
         _autoViewsByTexture.Add(texture, textureView);
@@ -172,7 +172,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public ResourceSet GetImageResourceSet(IntPtr imGuiBinding)
     {
-      if (!_viewsById.TryGetValue(imGuiBinding, out ResourceSetInfo tvi))
+      if(!_viewsById.TryGetValue(imGuiBinding, out ResourceSetInfo tvi))
       {
         throw new InvalidOperationException("No registered ImGui binding with id " + imGuiBinding.ToString());
       }
@@ -182,7 +182,7 @@ namespace Sukoa.Renderer
 
     public void ClearCachedImageResources()
     {
-      foreach (IDisposable resource in _ownedResources)
+      foreach(IDisposable resource in _ownedResources)
       {
         resource.Dispose();
       }
@@ -196,7 +196,7 @@ namespace Sukoa.Renderer
 
     private byte[] LoadEmbeddedShaderCode(ResourceFactory factory, string name, ShaderStages stage)
     {
-      switch (factory.BackendType)
+      switch(factory.BackendType)
       {
         case GraphicsBackend.Direct3D11:
           {
@@ -226,7 +226,7 @@ namespace Sukoa.Renderer
     private byte[] GetEmbeddedResourceBytes(string resourceName)
     {
       Assembly assembly = typeof(ImGuiView).Assembly;
-      using (Stream s = assembly.GetManifestResourceStream(resourceName))
+      using(Stream s = assembly.GetManifestResourceStream(resourceName))
       {
         byte[] ret = new byte[s.Length];
         s.Read(ret, 0, (int)s.Length);
@@ -280,7 +280,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public void Render(GraphicsDevice gd, CommandList cl)
     {
-      if (_frameBegun)
+      if(_frameBegun)
       {
         _frameBegun = false;
         ImGui.Render();
@@ -293,7 +293,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public void Update(float deltaSeconds, InputSnapshot snapshot, float width, float height)
     {
-      if (_frameBegun)
+      if(_frameBegun)
       {
         ImGui.Render();
       }
@@ -329,11 +329,11 @@ namespace Sukoa.Renderer
       bool leftPressed = false;
       bool middlePressed = false;
       bool rightPressed = false;
-      foreach (MouseEvent me in snapshot.MouseEvents)
+      foreach(MouseEvent me in snapshot.MouseEvents)
       {
-        if (me.Down)
+        if(me.Down)
         {
-          switch (me.MouseButton)
+          switch(me.MouseButton)
           {
             case MouseButton.Left:
               leftPressed = true;
@@ -355,30 +355,30 @@ namespace Sukoa.Renderer
       io.MouseWheel = snapshot.WheelDelta;
 
       IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
-      for (int i = 0; i < keyCharPresses.Count; i++)
+      for(int i = 0; i < keyCharPresses.Count; i++)
       {
         char c = keyCharPresses[i];
         io.AddInputCharacter(c);
       }
 
       IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
-      for (int i = 0; i < keyEvents.Count; i++)
+      for(int i = 0; i < keyEvents.Count; i++)
       {
         KeyEvent keyEvent = keyEvents[i];
         io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
-        if (keyEvent.Key == Key.ControlLeft)
+        if(keyEvent.Key == Key.ControlLeft)
         {
           _controlDown = keyEvent.Down;
         }
-        if (keyEvent.Key == Key.ShiftLeft)
+        if(keyEvent.Key == Key.ShiftLeft)
         {
           _shiftDown = keyEvent.Down;
         }
-        if (keyEvent.Key == Key.AltLeft)
+        if(keyEvent.Key == Key.AltLeft)
         {
           _altDown = keyEvent.Down;
         }
-        if (keyEvent.Key == Key.WinLeft)
+        if(keyEvent.Key == Key.WinLeft)
         {
           _winKeyDown = keyEvent.Down;
         }
@@ -420,26 +420,26 @@ namespace Sukoa.Renderer
       uint vertexOffsetInVertices = 0;
       uint indexOffsetInElements = 0;
 
-      if (draw_data.CmdListsCount == 0)
+      if(draw_data.CmdListsCount == 0)
       {
         return;
       }
 
       uint totalVBSize = (uint)(draw_data.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
-      if (totalVBSize > _vertexBuffer.SizeInBytes)
+      if(totalVBSize > _vertexBuffer.SizeInBytes)
       {
         gd.DisposeWhenIdle(_vertexBuffer);
         _vertexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(totalVBSize * 1.5f), BufferUsage.VertexBuffer | BufferUsage.Dynamic));
       }
 
       uint totalIBSize = (uint)(draw_data.TotalIdxCount * sizeof(ushort));
-      if (totalIBSize > _indexBuffer.SizeInBytes)
+      if(totalIBSize > _indexBuffer.SizeInBytes)
       {
         gd.DisposeWhenIdle(_indexBuffer);
         _indexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(totalIBSize * 1.5f), BufferUsage.IndexBuffer | BufferUsage.Dynamic));
       }
 
-      for (int i = 0; i < draw_data.CmdListsCount; i++)
+      for(int i = 0; i < draw_data.CmdListsCount; i++)
       {
         ImDrawListPtr cmd_list = draw_data.CmdListsRange[i];
 
@@ -481,21 +481,21 @@ namespace Sukoa.Renderer
       // Render command lists
       int vtx_offset = 0;
       int idx_offset = 0;
-      for (int n = 0; n < draw_data.CmdListsCount; n++)
+      for(int n = 0; n < draw_data.CmdListsCount; n++)
       {
         ImDrawListPtr cmd_list = draw_data.CmdListsRange[n];
-        for (int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
+        for(int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
         {
           ImDrawCmdPtr pcmd = cmd_list.CmdBuffer[cmd_i];
-          if (pcmd.UserCallback != IntPtr.Zero)
+          if(pcmd.UserCallback != IntPtr.Zero)
           {
             throw new NotImplementedException();
           }
           else
           {
-            if (pcmd.TextureId != IntPtr.Zero)
+            if(pcmd.TextureId != IntPtr.Zero)
             {
-              if (pcmd.TextureId == _fontAtlasID)
+              if(pcmd.TextureId == _fontAtlasID)
               {
                 cl.SetGraphicsResourceSet(1, _fontTextureResourceSet);
               }
@@ -545,7 +545,7 @@ namespace Sukoa.Renderer
       _pipeline.Dispose();
       _mainResourceSet.Dispose();
 
-      foreach (IDisposable resource in _ownedResources)
+      foreach(IDisposable resource in _ownedResources)
       {
         resource.Dispose();
       }
@@ -569,7 +569,7 @@ namespace Sukoa.Renderer
   {
     public static SDL_SystemCursor? Cursor(ImGuiMouseCursor cursor)
     {
-      switch (cursor)
+      switch(cursor)
       {
         case ImGuiMouseCursor.Arrow: return SDL_SystemCursor.Arrow;
         case ImGuiMouseCursor.Hand: return SDL_SystemCursor.Hand;
@@ -580,6 +580,159 @@ namespace Sukoa.Renderer
         case ImGuiMouseCursor.ResizeEW: return SDL_SystemCursor.SizeWE;
         default: return null;
       }
+    }
+
+    public static Key[] GetKeys()
+    {
+      return new[] {
+        Key.Unknown,
+        Key.ShiftLeft,
+        Key.LShift,
+        Key.ShiftRight,
+        Key.RShift,
+        Key.ControlLeft,
+        Key.LControl,
+        Key.ControlRight,
+        Key.RControl,
+        Key.AltLeft,
+        Key.LAlt,
+        Key.AltRight,
+        Key.RAlt,
+        Key.WinLeft,
+        Key.LWin,
+        Key.WinRight,
+        Key.RWin,
+        Key.Menu,
+        Key.F1,
+        Key.F2,
+        Key.F3,
+        Key.F4,
+        Key.F5,
+        Key.F6,
+        Key.F7,
+        Key.F8,
+        Key.F9,
+        Key.F10,
+        Key.F11,
+        Key.F12,
+        Key.F13,
+        Key.F14,
+        Key.F15,
+        Key.F16,
+        Key.F17,
+        Key.F18,
+        Key.F19,
+        Key.F20,
+        Key.F21,
+        Key.F22,
+        Key.F23,
+        Key.F24,
+        Key.F25,
+        Key.F26,
+        Key.F27,
+        Key.F28,
+        Key.F29,
+        Key.F30,
+        Key.F31,
+        Key.F32,
+        Key.F33,
+        Key.F34,
+        Key.F35,
+        Key.Up,
+        Key.Down,
+        Key.Left,
+        Key.Right,
+        Key.Enter,
+        Key.Escape,
+        Key.Space,
+        Key.Tab,
+        Key.BackSpace,
+        Key.Back,
+        Key.Insert,
+        Key.Delete,
+        Key.PageUp,
+        Key.PageDown,
+        Key.Home,
+        Key.End,
+        Key.CapsLock,
+        Key.ScrollLock,
+        Key.PrintScreen,
+        Key.Pause,
+        Key.NumLock,
+        Key.Clear,
+        Key.Sleep,
+        Key.Keypad0,
+        Key.Keypad1,
+        Key.Keypad2,
+        Key.Keypad3,
+        Key.Keypad4,
+        Key.Keypad5,
+        Key.Keypad6,
+        Key.Keypad7,
+        Key.Keypad8,
+        Key.Keypad9,
+        Key.KeypadDivide,
+        Key.KeypadMultiply,
+        Key.KeypadSubtract,
+        Key.KeypadMinus,
+        Key.KeypadAdd,
+        Key.KeypadPlus,
+        Key.KeypadDecimal,
+        Key.KeypadPeriod,
+        Key.KeypadEnter,
+        Key.A,
+        Key.B,
+        Key.C,
+        Key.D,
+        Key.E,
+        Key.F,
+        Key.G,
+        Key.H,
+        Key.I,
+        Key.J,
+        Key.K,
+        Key.L,
+        Key.M,
+        Key.N,
+        Key.O,
+        Key.P,
+        Key.Q,
+        Key.R,
+        Key.S,
+        Key.T,
+        Key.U,
+        Key.V,
+        Key.W,
+        Key.X,
+        Key.Y,
+        Key.Z,
+        Key.Number0,
+        Key.Number1,
+        Key.Number2,
+        Key.Number3,
+        Key.Number4,
+        Key.Number5,
+        Key.Number6,
+        Key.Number7,
+        Key.Number8,
+        Key.Number9,
+        Key.Tilde,
+        Key.Grave,
+        Key.Minus,
+        Key.Plus,
+        Key.BracketLeft,
+        Key.LBracket,
+        Key.BracketRight,
+        Key.RBracket,
+        Key.Semicolon,
+        Key.Quote,
+        Key.Comma,
+        Key.Period,
+        Key.Slash,
+        Key.BackSlash,
+        Key.NonUSBackSlash,
+        Key.LastKey,
+      };
     }
   }
 }

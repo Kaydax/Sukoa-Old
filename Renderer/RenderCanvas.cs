@@ -14,7 +14,7 @@ namespace Sukoa.Renderer
       Width = width;
       Height = height;
 
-      Texture = factory.CreateTexture(TextureDescription.Texture2D(1024, 1024, 1, 1, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.RenderTarget | TextureUsage.Sampled)); ;
+      Texture = factory.CreateTexture(TextureDescription.Texture2D((uint)width, (uint)height, 1, 1, PixelFormat.R32_G32_B32_A32_Float, TextureUsage.RenderTarget | TextureUsage.Sampled)); ;
       TextureView = factory.CreateTextureView(Texture);
       FrameBuffer = factory.CreateFramebuffer(new FramebufferDescription(null, Texture));
 

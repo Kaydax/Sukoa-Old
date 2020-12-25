@@ -123,11 +123,11 @@ namespace Sukoa.Components
       base.ProcessInputs();
 
       var rect = ImGui.GetItemRectSize();
-      if(ImGui.IsItemHovered())
-      {
-        Console.WriteLine(ImGui.GetMousePos() - ImGui.GetCursorStartPos() - ImGui.GetWindowPos());
-        ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-      }
+      //Console.WriteLine(ImGui.IsKeyDown(83));
+      // if(ImGui.IsItemHovered())
+      // {
+      //   ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+      // }
     }
 
     int frame = 0;
