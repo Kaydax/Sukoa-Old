@@ -26,7 +26,6 @@
       <None Remove=".gitmodules" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="ImGui.NET" Version="1.78.0" />
         <PackageReference Include="Veldrid" Version="4.9.0-gfca0b9438b" />
         <PackageReference Include="Veldrid.StartupUtilities" Version="4.9.0-gfca0b9438b" />
         <PackageReference Include="Veldrid.SPIRV" Version="1.0.13" />
@@ -42,6 +41,7 @@
         <EmbeddedResource Include="Shaders/Metal/imgui-frag.metallib" LogicalName="imgui-frag.metallib" />
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="externals\ImGui.NET\src\ImGui.NET\ImGui.NET.csproj" />
         <ProjectReference Include="externals\MIDIModificationFramework\MIDIModificationFramework.csproj" />
     </ItemGroup>
 </Project>

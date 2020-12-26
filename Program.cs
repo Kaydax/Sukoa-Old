@@ -27,7 +27,7 @@ namespace Sukoa
 
       var cl = gd.ResourceFactory.CreateCommandList();
 
-      var imGui = new ImGuiView(gd, gd.MainSwapchain.Framebuffer.OutputDescription, view.Width, view.Height);
+      var imGui = new ImGuiView(gd, view.Window, gd.MainSwapchain.Framebuffer.OutputDescription, view.Width, view.Height);
 
       // Initialize imgui UI
       var uihost = new UIHost();
@@ -78,6 +78,7 @@ namespace Sukoa
         cl.End();
         gd.SubmitCommands(cl);
         gd.SwapBuffers(gd.MainSwapchain);
+        imGui.SwapExtraWindows(gd);
       }
 
       dispose.Dispose();
