@@ -17,17 +17,48 @@ namespace Sukoa.Renderer
     DisposeGroup dispose = new DisposeGroup();
 
     List<DeviceBuffer> VertexBufferCache { get; } = new List<DeviceBuffer>();
+    DeviceBuffer IndexBuffer { get; } = null;
 
     int bufferPos = 0;
+
+    int[] indices;
+    int indicesPerShape;
+    int vertsPerShape;
 
     T[] buffer;
     int itemSizeInBytes;
 
-    public BufferList(GraphicsDevice gd, int bufferSize)
+    public BufferList(GraphicsDevice gd, int bufferSize, int[] indices = null)
     {
       itemSizeInBytes = Unsafe.SizeOf<T>();
       GraphicsDevice = gd;
       buffer = new T[bufferSize];
+
+      if(indices != null)
+      {
+        if(indices.Length == 0) throw new Exception("Indices must be longer than zero");
+        if(indices.Min() != 0) throw new Exception("Smallest index must be zero");
+        var max = indices.Max();
+        if(max < 0) throw new Exception("Biggest index can't be smaller than 0");
+        vertsPerShape = max + 1;
+        indicesPerShape = indices.Length;
+
+        if(bufferSize % vertsPerShape != 0) throw new Exception("Buffer size must be a multiple of shape vertex count");
+
+        var indexArray = new int[bufferSize / vertsPerShape * indicesPerShape];
+        for(int i = 0; i < bufferSize / vertsPerShape; i++)
+        {
+          for(int j = 0; j < indicesPerShape; j++)
+          {
+            indexArray[i * indicesPerShape + j] = i * vertsPerShape + indices[j];
+          }
+        }
+
+        this.indices = indexArray;
+
+        IndexBuffer = dispose.Add(Factory.CreateBuffer(new BufferDescription((uint)(indexArray.Length * sizeof(int)), BufferUsage.IndexBuffer)));
+        GraphicsDevice.UpdateBuffer(IndexBuffer, 0, indexArray);
+      }
     }
 
     public void Reset()
@@ -50,11 +81,12 @@ namespace Sukoa.Renderer
       var bufferCount = (bufferPos - posInBuffer) / buffer.Length + 1;
       if(posInBuffer == 0)
       {
-        // bufferCount--;
+        bufferCount--;
         posInBuffer = buffer.Length;
       }
 
-      if(bufferCount == 0){
+      if(bufferCount == 0)
+      {
         return;
       }
 
@@ -66,7 +98,17 @@ namespace Sukoa.Renderer
       var bufferToWrite = VertexBufferCache[bufferCount - 1];
       GraphicsDevice.UpdateBuffer(bufferToWrite, 0, ref buffer[0], (uint)(posInBuffer * itemSizeInBytes));
       cl.SetVertexBuffer(0, bufferToWrite);
-      cl.Draw((uint)posInBuffer);
+
+      if(indices == null)
+      {
+        cl.Draw((uint)posInBuffer);
+      }
+      else
+      {
+        cl.SetIndexBuffer(IndexBuffer, IndexFormat.UInt32);
+        if(posInBuffer % vertsPerShape != 0) throw new Exception("Submitted an incomplete shape to the buffer flushing");
+        cl.DrawIndexed((uint)(posInBuffer / vertsPerShape * indicesPerShape));
+      }
     }
 
     public void Dispose()

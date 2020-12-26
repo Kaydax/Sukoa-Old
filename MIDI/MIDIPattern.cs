@@ -13,7 +13,7 @@ namespace Sukoa.MIDI
 
     public void GenNotes()
     {
-      var file = new MidiFile("D:/Midis/scale-flip.mid");
+      var file = new MidiFile("D:/Midis/Clubstep.mid");
 
       Notes.AddRange(file.IterateTracks().Select(t => t.ChangePPQ(file.PPQ, 1).ExtractNotes()).MergeAll());
     }

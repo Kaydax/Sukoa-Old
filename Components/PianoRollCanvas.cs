@@ -10,6 +10,7 @@ using Veldrid.SPIRV;
 using System.Numerics;
 using ImGuiNET;
 using Sukoa.MIDI;
+using Sukoa.Util;
 
 namespace Sukoa.Components
 {
@@ -67,10 +68,16 @@ namespace Sukoa.Components
 
     DisposeGroup dispose = new DisposeGroup();
 
+    SmoothZoomView viewFrame = new SmoothZoomView(0, 128, 0, 100);
+
     public PianoRollCanvas(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize, MIDIPattern pattern) : base(gd, view, computeSize)
     {
-      Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048));
+      Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 / 16, new[] { 0, 3, 2, 0, 2, 1 }));
       Pattern = pattern;
+
+      viewFrame.MaxLeft = 0;
+      viewFrame.MaxTop = 0;
+      viewFrame.MaxBottom = 128;
 
       ProjMatrix = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
       dispose.Add(ProjMatrix);
@@ -123,14 +130,37 @@ namespace Sukoa.Components
       base.ProcessInputs();
 
       var rect = ImGui.GetItemRectSize();
-      //Console.WriteLine(ImGui.IsKeyDown(83));
-      // if(ImGui.IsItemHovered())
-      // {
-      //   ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-      // }
-    }
 
-    int frame = 0;
+      var io = ImGui.GetIO();
+
+      var mousePos = ImGui.GetMousePos() - ImGui.GetWindowPos() - ImGui.GetCursorStartPos();
+      var mouseRelativePos = mousePos / ImGui.GetItemRectSize();
+
+      if(ImGui.IsItemHovered())
+      {
+        if(io.MouseWheel != 0)
+        {
+          var zoom = Math.Pow(1.2, -io.MouseWheel);
+
+          if(io.KeyCtrl)
+          {
+            viewFrame.ZoomHorizontalAt(mouseRelativePos.X, zoom);
+          }
+          else if(io.KeyAlt)
+          {
+            viewFrame.ZoomVerticalAt(mouseRelativePos.Y, zoom);
+          }
+          else if(io.KeyShift)
+          {
+            viewFrame.ScrollHorizontalBy(viewFrame.TrueWidth / 8 * -io.MouseWheel);
+          }
+          else
+          {
+            viewFrame.ScrollVerticalBy(viewFrame.TrueHeight / 8 * -io.MouseWheel);
+          }
+        }
+      }
+    }
 
     protected override void RenderToCanvas(CommandList cl)
     {
@@ -145,39 +175,43 @@ namespace Sukoa.Components
       cl.SetPipeline(Pipeline);
       cl.SetGraphicsResourceSet(0, MainResourceSet);
 
-      frame++;
-      var count = (frame / 1000) % 4;
-
       Buffer.Reset();
 
-      //for(int i = 0; i < count; i++)
-      //{
-      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 150f + i * 100), RgbaFloat.Red));
-      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 150f + i * 100), RgbaFloat.Green));
-      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 0 + i * 100), RgbaFloat.Blue));
+      viewFrame.Update();
 
-      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 0 + i * 100), RgbaFloat.Yellow));
-      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 0 + i * 100), RgbaFloat.Blue));
-      //  Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 150f + i * 100), RgbaFloat.Green));
-      //}
+      var canvasSize = ImGui.GetItemRectSize();
 
       void PushQuad(float top, float right, float bottom, float left)
       {
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), RgbaFloat.Red));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
+        //Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), RgbaFloat.Red));
+        //Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
+        //Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
 
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), RgbaFloat.Yellow));
+        //Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), RgbaFloat.Yellow));
+        //Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
+        //Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
+
         Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), RgbaFloat.Yellow));
         Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), RgbaFloat.Red));
       }
 
-      float keyHeight = 10;
-      float noteScale = 10;
+      void PushScaledQuad(double top, double right, double bottom, double left)
+      {
+        if(top > viewFrame.EaseBottom || bottom < viewFrame.EaseTop || left > viewFrame.EaseRight || right < viewFrame.EaseLeft) return;
+
+        top = viewFrame.TransformYToOutside(top) * canvasSize.Y;
+        bottom = viewFrame.TransformYToOutside(bottom) * canvasSize.Y;
+        left = viewFrame.TransformXToOutside(left) * canvasSize.X;
+        right = viewFrame.TransformXToOutside(right) * canvasSize.X;
+
+        PushQuad((float)top, (float)right, (float)bottom, (float)left);
+      }
 
       foreach(var note in Pattern.Notes)
       {
-        PushQuad(note.Key * keyHeight, (float)(note.End * noteScale), note.Key * keyHeight + keyHeight, (float)(note.Start * noteScale));
+        PushScaledQuad(note.Key, note.End, note.Key + 1, note.Start);
       }
 
       Buffer.Flush(cl);

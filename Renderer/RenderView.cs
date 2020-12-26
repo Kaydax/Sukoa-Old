@@ -62,7 +62,7 @@ namespace Sukoa.Renderer
       CreateAndAddCursor(SDL_SystemCursor.Wait);
       CreateAndAddCursor(SDL_SystemCursor.WaitArrow);
 
-      GraphicsDevice = dispose.Add(VeldridStartup.CreateGraphicsDevice(Window, options, GraphicsBackend.Direct3D11));
+      GraphicsDevice = dispose.Add(VeldridStartup.CreateGraphicsDevice(Window, options, GraphicsBackend.Vulkan));
 
       Window.Resized += () =>
       {
