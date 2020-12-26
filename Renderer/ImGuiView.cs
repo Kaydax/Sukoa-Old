@@ -482,7 +482,7 @@ namespace Sukoa.Renderer
     /// <summary>
     /// Updates ImGui input and IO configuration state.
     /// </summary>
-    public void Update(float deltaSeconds, InputSnapshot snapshot, float width, float height)
+    public void Update(float deltaSeconds, float width, float height)
     {
       if(_frameBegun)
       {
@@ -491,7 +491,7 @@ namespace Sukoa.Renderer
       }
 
       SetPerFrameImGuiData(deltaSeconds, width, height);
-      UpdateImGuiInput(snapshot);
+      UpdateImGuiInput();
       UpdateMonitors();
 
       _frameBegun = true;
@@ -548,38 +548,53 @@ namespace Sukoa.Renderer
       ImGui.GetPlatformIO().MainViewport.Size = new Vector2(_window.Width, _window.Height);
     }
 
-    private void UpdateImGuiInput(InputSnapshot snapshot)
+    private void UpdateImGuiInput()
     {
       ImGuiIOPtr io = ImGui.GetIO();
 
-      Vector2 mousePosition = snapshot.MousePosition;
+      io.MouseWheel = 0;
 
-      // Determine if any of the mouse buttons were pressed during this snapshot period, even if they are no longer held.
-      bool leftPressed = false;
-      bool middlePressed = false;
-      bool rightPressed = false;
-      foreach(MouseEvent me in snapshot.MouseEvents)
+      ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
+      for(int i = 0; i < viewports.Size; i++)
       {
-        if(me.Down)
+        ImGuiViewportPtr v = viewports[i];
+        var target = GCHandle.FromIntPtr(v.PlatformUserData).Target;
+        if(target is VeldridImGuiWindow veldridWindow)
         {
-          switch(me.MouseButton)
+          var snapshot = veldridWindow.PumpEvents();
+          io.MouseWheel += snapshot.WheelDelta;
+
+          IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
+          for(int k = 0; k < keyCharPresses.Count; k++)
           {
-            case MouseButton.Left:
-              leftPressed = true;
-              break;
-            case MouseButton.Middle:
-              middlePressed = true;
-              break;
-            case MouseButton.Right:
-              rightPressed = true;
-              break;
+            char c = keyCharPresses[k];
+            io.AddInputCharacter(c);
+          }
+
+          IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
+          for(int k = 0; k < keyEvents.Count; k++)
+          {
+            KeyEvent keyEvent = keyEvents[k];
+            io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
+            if(keyEvent.Key == Key.ControlLeft)
+            {
+              _controlDown = keyEvent.Down;
+            }
+            if(keyEvent.Key == Key.ShiftLeft)
+            {
+              _shiftDown = keyEvent.Down;
+            }
+            if(keyEvent.Key == Key.AltLeft)
+            {
+              _altDown = keyEvent.Down;
+            }
+            if(keyEvent.Key == Key.WinLeft)
+            {
+              _winKeyDown = keyEvent.Down;
+            }
           }
         }
       }
-
-      io.MouseDown[0] = leftPressed || snapshot.IsMouseDown(MouseButton.Left);
-      io.MouseDown[1] = middlePressed || snapshot.IsMouseDown(MouseButton.Right);
-      io.MouseDown[2] = rightPressed || snapshot.IsMouseDown(MouseButton.Middle);
 
       if(p_sdl_GetGlobalMouseState == null)
       {
@@ -596,50 +611,11 @@ namespace Sukoa.Renderer
       }
 
       io.MousePos = new Vector2(x, y);
-      io.MouseWheel = snapshot.WheelDelta;
-
-      IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
-      for(int i = 0; i < keyCharPresses.Count; i++)
-      {
-        char c = keyCharPresses[i];
-        io.AddInputCharacter(c);
-      }
-
-      IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
-      for(int i = 0; i < keyEvents.Count; i++)
-      {
-        KeyEvent keyEvent = keyEvents[i];
-        io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
-        if(keyEvent.Key == Key.ControlLeft)
-        {
-          _controlDown = keyEvent.Down;
-        }
-        if(keyEvent.Key == Key.ShiftLeft)
-        {
-          _shiftDown = keyEvent.Down;
-        }
-        if(keyEvent.Key == Key.AltLeft)
-        {
-          _altDown = keyEvent.Down;
-        }
-        if(keyEvent.Key == Key.WinLeft)
-        {
-          _winKeyDown = keyEvent.Down;
-        }
-      }
 
       io.KeyCtrl = _controlDown;
       io.KeyAlt = _altDown;
       io.KeyShift = _shiftDown;
       io.KeySuper = _winKeyDown;
-
-      ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
-      for(int i = 1; i < viewports.Size; i++)
-      {
-        ImGuiViewportPtr v = viewports[i];
-        VeldridImGuiWindow window = ((VeldridImGuiWindow)GCHandle.FromIntPtr(v.PlatformUserData).Target);
-        window.Update();
-      }
     }
 
     private static void SetKeyMappings()
@@ -665,6 +641,8 @@ namespace Sukoa.Renderer
       io.KeyMap[(int)ImGuiKey.Y] = (int)Key.Y;
       io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;
       io.KeyMap[(int)ImGuiKey.Space] = (int)Key.Space;
+
+
     }
 
     private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd, CommandList cl)

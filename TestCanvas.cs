@@ -147,8 +147,6 @@ namespace Sukoa
       }
     }
 
-    int frame = 0;
-
     protected override void RenderToCanvas(CommandList cl)
     {
       cl.SetFramebuffer(Canvas.FrameBuffer);
@@ -170,12 +168,9 @@ namespace Sukoa
       //     vertexOffset: 0,
       //     instanceStart: 0);
 
-      frame++;
-      var count = (frame / 1000) % 4;
-
       Buffer.Reset();
 
-      for(int i = 0; i < count; i++)
+      for(int i = 0; i < 3; i++)
       {
         Buffer.Push(cl, new VertexPositionColor(new Vector2(0 + i * 100, 150f + i * 100), RgbaFloat.Red));
         Buffer.Push(cl, new VertexPositionColor(new Vector2(150f + i * 100, 150f + i * 100), RgbaFloat.Green));

@@ -29,7 +29,7 @@ namespace Sukoa.UI
       var check = Checked.Value;
 
       ImGui.Checkbox(Label, ref check);
-      if (check != Checked.Value) Checked.Set(check);
+      if(check != Checked.Value) Checked.Set(check);
     }
   }
 }

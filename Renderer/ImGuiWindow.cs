@@ -70,9 +70,9 @@ namespace Sukoa.Renderer
       vp.PlatformUserData = (IntPtr)_gcHandle;
     }
 
-    public void Update()
+    public InputSnapshot PumpEvents()
     {
-      _window.PumpEvents();
+      return _window.PumpEvents();
     }
 
     public void Dispose()

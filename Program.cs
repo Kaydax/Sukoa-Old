@@ -59,9 +59,8 @@ namespace Sukoa
       // Main application loop
       while (view.Exists)
       {
-        InputSnapshot snapshot = view.Window.PumpEvents();
         if (!view.Exists) { break; }
-        imGui.Update((float)frameTimer.Elapsed.TotalSeconds, snapshot, view.Width, view.Height);
+        imGui.Update((float)frameTimer.Elapsed.TotalSeconds, view.Width, view.Height);
         frameTimer.Reset();
         frameTimer.Start();
 
