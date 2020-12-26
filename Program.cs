@@ -48,7 +48,8 @@ namespace Sukoa
       var canvasWindow = dispose.Add(new UIWindow());
       var pattern = new MIDIPattern();
       pattern.GenNotes();
-      var testCanvas = new PianoRollCanvas(gd, imGui, ImGui.GetContentRegionAvail, pattern);
+      var pianoPattern = new PianoRollPattern(pattern);
+      var testCanvas = new PianoRollCanvas(gd, imGui, ImGui.GetContentRegionAvail, pianoPattern);
       canvasWindow.Name = "Test canvas renderer";
       canvasWindow.Children.Add(testCanvas);
       uihost.Children.Add(canvasWindow);

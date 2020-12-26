@@ -34,7 +34,9 @@ namespace Sukoa.Components
     ResourceSet MainResourceSet { get; set; }
     Shader[] Shaders { get; set; }
     Pipeline Pipeline { get; set; }
-    MIDIPattern Pattern { get; set; }
+    PianoRollPattern PatternHandler { get; }
+
+    IPianoRollAction CurrentAction { get; set; } = null;
 
     const string VertexCode = @"
       #version 450
@@ -68,16 +70,10 @@ namespace Sukoa.Components
 
     DisposeGroup dispose = new DisposeGroup();
 
-    SmoothZoomView viewFrame = new SmoothZoomView(0, 128, 0, 100);
-
-    public PianoRollCanvas(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize, MIDIPattern pattern) : base(gd, view, computeSize)
+    public PianoRollCanvas(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize, PianoRollPattern pattern) : base(gd, view, computeSize)
     {
       Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 / 16, new[] { 0, 3, 2, 0, 2, 1 }));
-      Pattern = pattern;
-
-      viewFrame.MaxLeft = 0;
-      viewFrame.MaxTop = 0;
-      viewFrame.MaxBottom = 128;
+      PatternHandler = pattern;
 
       ProjMatrix = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
       dispose.Add(ProjMatrix);
@@ -136,12 +132,36 @@ namespace Sukoa.Components
       var mousePos = ImGui.GetMousePos() - ImGui.GetWindowPos() - ImGui.GetCursorStartPos();
       var mouseRelativePos = mousePos / ImGui.GetItemRectSize();
 
+      if(CurrentAction != null)
+      {
+        CurrentAction.Act();
+        while (CurrentAction != null && CurrentAction.NextAction != CurrentAction)
+        {
+          CurrentAction = CurrentAction.NextAction;
+        }
+      }
+      else
+      {
+        if(ImGui.IsItemHovered())
+        {
+          if(ImGui.IsMouseDown(ImGuiMouseButton.Left))
+          {
+            CurrentAction = new PianoRollActionMouseDown(PatternHandler);
+            while(CurrentAction != null && CurrentAction.NextAction != CurrentAction)
+            {
+              CurrentAction = CurrentAction.NextAction;
+            }
+          }
+        }
+      }
+
       if(ImGui.IsItemHovered())
       {
         if(io.MouseWheel != 0)
         {
           var zoom = Math.Pow(1.2, -io.MouseWheel);
 
+          var viewFrame = PatternHandler.ViewFrame;
           if(io.KeyCtrl)
           {
             viewFrame.ZoomHorizontalAt(mouseRelativePos.X, zoom);
@@ -177,41 +197,63 @@ namespace Sukoa.Components
 
       Buffer.Reset();
 
+      var viewFrame = PatternHandler.ViewFrame;
+
       viewFrame.Update();
 
       var canvasSize = ImGui.GetItemRectSize();
 
-      void PushQuad(float top, float right, float bottom, float left)
+      void ScaleRectSides(ref double top, ref double right, ref double bottom, ref double left)
       {
-        //Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), RgbaFloat.Red));
-        //Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
-        //Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
-
-        //Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), RgbaFloat.Yellow));
-        //Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
-        //Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
-
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), RgbaFloat.Blue));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), RgbaFloat.Yellow));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), RgbaFloat.Green));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), RgbaFloat.Red));
-      }
-
-      void PushScaledQuad(double top, double right, double bottom, double left)
-      {
-        if(top > viewFrame.EaseBottom || bottom < viewFrame.EaseTop || left > viewFrame.EaseRight || right < viewFrame.EaseLeft) return;
-
         top = viewFrame.TransformYToOutside(top) * canvasSize.Y;
         bottom = viewFrame.TransformYToOutside(bottom) * canvasSize.Y;
         left = viewFrame.TransformXToOutside(left) * canvasSize.X;
         right = viewFrame.TransformXToOutside(right) * canvasSize.X;
-
-        PushQuad((float)top, (float)right, (float)bottom, (float)left);
       }
 
-      foreach(var note in Pattern.Notes)
+      bool IsRectIllegal(double top, double right, double bottom, double left)
       {
-        PushScaledQuad(note.Key, note.End, note.Key + 1, note.Start);
+        return top > bottom || left > right;
+      }
+
+      void PushQuad(float top, float right, float bottom, float left, RgbaFloat col)
+      {
+        if(top > canvasSize.Y || bottom < 0 || left > canvasSize.X || right < 0) return;
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), col));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), col));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), col));
+        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), col));
+      }
+
+      void PushNote(double top, double right, double bottom, double left, RgbaFloat col)
+      {
+        var borderCol = new RgbaFloat(col.ToVector4() * new Vector4(0.4f, 0.4f, 0.4f, 1));
+        ScaleRectSides(ref top, ref right, ref bottom, ref left);
+        PushQuad((float)top, (float)right, (float)bottom, (float)left, borderCol);
+        top += 1;
+        bottom -= 1;
+        right -= 1;
+        left += 1;
+        if(!IsRectIllegal(top, right, bottom, left))
+        {
+          PushQuad((float)top, (float)right, (float)bottom, (float)left, col);
+        }
+      }
+
+      var pattern = PatternHandler.Pattern;
+
+      for(int key = 0; key < pattern.Notes.Length; key++)
+      {
+        var noteKey = pattern.Notes[key];
+        foreach(var note in noteKey)
+        {
+          var noteCol = new RgbaFloat(0.2f, 0.2f, 0.9f, 1);
+          if(PatternHandler.SelectedNotes.Contains(note))
+          {
+            noteCol = new RgbaFloat(0.9f, 0.2f, 0.2f, 1);
+          }
+          PushNote(key, note.End, key + 1, note.Start, noteCol);
+        }
       }
 
       Buffer.Flush(cl);
