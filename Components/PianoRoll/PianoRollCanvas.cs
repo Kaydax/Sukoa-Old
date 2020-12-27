@@ -11,6 +11,7 @@ using System.Numerics;
 using ImGuiNET;
 using Sukoa.MIDI;
 using Sukoa.Util;
+using Rectangle = Sukoa.Util.Rectangle;
 
 namespace Sukoa.Components
 {
@@ -36,7 +37,7 @@ namespace Sukoa.Components
     Pipeline Pipeline { get; set; }
     PianoRollPattern PatternHandler { get; }
 
-    IPianoRollAction CurrentAction { get; set; } = null;
+    IPianoRollAction CurrentAction { get; set; }
 
     const string VertexCode = @"
       #version 450
@@ -74,6 +75,7 @@ namespace Sukoa.Components
     {
       Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 / 16, new[] { 0, 3, 2, 0, 2, 1 }));
       PatternHandler = pattern;
+      CurrentAction = new PianoRollActionIdle(PatternHandler);
 
       ProjMatrix = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
       dispose.Add(ProjMatrix);
@@ -98,7 +100,7 @@ namespace Sukoa.Components
       Shaders = dispose.AddArray(Factory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc));
 
       var pipelineDescription = new GraphicsPipelineDescription();
-      pipelineDescription.BlendState = BlendStateDescription.SingleOverrideBlend;
+      pipelineDescription.BlendState = BlendStateDescription.SingleAlphaBlend;
       pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
         depthTestEnabled: true,
         depthWriteEnabled: true,
@@ -125,60 +127,10 @@ namespace Sukoa.Components
     {
       base.ProcessInputs();
 
-      var rect = ImGui.GetItemRectSize();
-
-      var io = ImGui.GetIO();
-
-      var mousePos = ImGui.GetMousePos() - ImGui.GetWindowPos() - ImGui.GetCursorStartPos();
-      var mouseRelativePos = mousePos / ImGui.GetItemRectSize();
-
-      if(CurrentAction != null)
+      CurrentAction.Act();
+      while(CurrentAction.NextAction != null)
       {
-        CurrentAction.Act();
-        while (CurrentAction != null && CurrentAction.NextAction != CurrentAction)
-        {
-          CurrentAction = CurrentAction.NextAction;
-        }
-      }
-      else
-      {
-        if(ImGui.IsItemHovered())
-        {
-          if(ImGui.IsMouseDown(ImGuiMouseButton.Left))
-          {
-            CurrentAction = new PianoRollActionMouseDown(PatternHandler);
-            while(CurrentAction != null && CurrentAction.NextAction != CurrentAction)
-            {
-              CurrentAction = CurrentAction.NextAction;
-            }
-          }
-        }
-      }
-
-      if(ImGui.IsItemHovered())
-      {
-        if(io.MouseWheel != 0)
-        {
-          var zoom = Math.Pow(1.2, -io.MouseWheel);
-
-          var viewFrame = PatternHandler.ViewFrame;
-          if(io.KeyCtrl)
-          {
-            viewFrame.ZoomHorizontalAt(mouseRelativePos.X, zoom);
-          }
-          else if(io.KeyAlt)
-          {
-            viewFrame.ZoomVerticalAt(mouseRelativePos.Y, zoom);
-          }
-          else if(io.KeyShift)
-          {
-            viewFrame.ScrollHorizontalBy(viewFrame.TrueWidth / 8 * -io.MouseWheel);
-          }
-          else
-          {
-            viewFrame.ScrollVerticalBy(viewFrame.TrueHeight / 8 * -io.MouseWheel);
-          }
-        }
+        CurrentAction = CurrentAction.NextAction;
       }
     }
 
@@ -197,27 +149,25 @@ namespace Sukoa.Components
 
       Buffer.Reset();
 
-      var viewFrame = PatternHandler.ViewFrame;
+      PatternHandler.Update();
 
-      viewFrame.Update();
+      var viewFrame = PatternHandler.ViewFrame;
 
       var canvasSize = ImGui.GetItemRectSize();
 
-      void ScaleRectSides(ref double top, ref double right, ref double bottom, ref double left)
+      Rectangle ScaleRectSides(Rectangle rect)
       {
-        top = viewFrame.TransformYToOutside(top) * canvasSize.Y;
-        bottom = viewFrame.TransformYToOutside(bottom) * canvasSize.Y;
-        left = viewFrame.TransformXToOutside(left) * canvasSize.X;
-        right = viewFrame.TransformXToOutside(right) * canvasSize.X;
+        return new Rectangle(
+          (float)(viewFrame.TransformYToOutside(rect.Top) * canvasSize.Y),
+          (float)(viewFrame.TransformXToOutside(rect.Right) * canvasSize.X),
+          (float)(viewFrame.TransformYToOutside(rect.Bottom) * canvasSize.Y),
+          (float)(viewFrame.TransformXToOutside(rect.Left) * canvasSize.X)
+        );
       }
 
-      bool IsRectIllegal(double top, double right, double bottom, double left)
+      void PushQuad(Rectangle rect, RgbaFloat col)
       {
-        return top > bottom || left > right;
-      }
-
-      void PushQuad(float top, float right, float bottom, float left, RgbaFloat col)
-      {
+        float top = rect.Top, bottom = rect.Bottom, left = rect.Left, right = rect.Right;
         if(top > canvasSize.Y || bottom < 0 || left > canvasSize.X || right < 0) return;
         Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), col));
         Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), col));
@@ -225,18 +175,24 @@ namespace Sukoa.Components
         Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), col));
       }
 
-      void PushNote(double top, double right, double bottom, double left, RgbaFloat col)
+      void PushSelectionRectangle(Rectangle rect)
+      {
+        var scaled = ScaleRectSides(rect);
+        PushQuad(scaled, new RgbaFloat(0.8f, 0.2f, 0.2f, 0.7f));
+      }
+
+      void PushNote(Rectangle rect, RgbaFloat col)
       {
         var borderCol = new RgbaFloat(col.ToVector4() * new Vector4(0.4f, 0.4f, 0.4f, 1));
-        ScaleRectSides(ref top, ref right, ref bottom, ref left);
-        PushQuad((float)top, (float)right, (float)bottom, (float)left, borderCol);
-        top += 1;
-        bottom -= 1;
-        right -= 1;
-        left += 1;
-        if(!IsRectIllegal(top, right, bottom, left))
+        rect = ScaleRectSides(rect);
+        PushQuad(rect, borderCol);
+        rect.Top += 1;
+        rect.Bottom -= 1;
+        rect.Right -= 1;
+        rect.Left += 1;
+        if(rect.IsValid)
         {
-          PushQuad((float)top, (float)right, (float)bottom, (float)left, col);
+          PushQuad(rect, col);
         }
       }
 
@@ -247,13 +203,39 @@ namespace Sukoa.Components
         var noteKey = pattern.Notes[key];
         foreach(var note in noteKey)
         {
+          // Don't render selected notes yet, render them in the next pass
+          if(PatternHandler.IsNoteSelected(note))
+          {
+            continue;
+          }
+
+          var isSelected = false;
+          if(PatternHandler.IsNoteInSelectionRectangle(note, key))
+          {
+            isSelected = true;
+          }
+
           var noteCol = new RgbaFloat(0.2f, 0.2f, 0.9f, 1);
-          if(PatternHandler.SelectedNotes.Contains(note))
+          if(isSelected)
           {
             noteCol = new RgbaFloat(0.9f, 0.2f, 0.2f, 1);
           }
-          PushNote(key, note.End, key + 1, note.Start, noteCol);
+          PushNote(new Rectangle(key, (float)note.End, key + 1, (float)note.Start), noteCol);
         }
+      }
+
+      var selectionPosOffset = PatternHandler.SelectionPosOffset;
+      foreach(var selected in PatternHandler.SelectedNotes)
+      {
+        var note = selected.Note;
+        var key = selected.Key;
+        var noteCol = new RgbaFloat(0.9f, 0.2f, 0.2f, 1);
+        PushNote(new Rectangle(key, (float)note.End, key + 1, (float)note.Start).OffsetBy(selectionPosOffset), noteCol);
+      }
+
+      if(PatternHandler.SelectionRectangle != null)
+      {
+        PushSelectionRectangle(PatternHandler.SelectionRectangle ?? new Rectangle());
       }
 
       Buffer.Flush(cl);

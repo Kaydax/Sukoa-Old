@@ -28,6 +28,7 @@ namespace Sukoa
       var cl = gd.ResourceFactory.CreateCommandList();
 
       var imGui = new ImGuiView(gd, view.Window, gd.MainSwapchain.Framebuffer.OutputDescription, view.Width, view.Height);
+      ImGui.GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
       // Initialize imgui UI
       var uihost = new UIHost();

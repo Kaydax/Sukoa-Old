@@ -74,6 +74,7 @@ namespace Sukoa.Util
 
     public void SetEnd(double e)
     {
+      if(e == End) return;
       double t = (DateTime.UtcNow - start).TotalSeconds / Duration;
       double vel;
       if(t > 1)

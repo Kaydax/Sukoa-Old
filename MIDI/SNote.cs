@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sukoa.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Sukoa.MIDI
 {
-  public class SNote
+  public class SNote : IComparable
   {
     double length;
 
@@ -50,6 +51,11 @@ namespace Sukoa.MIDI
     public virtual SNote Clone()
     {
       return new SNote(Start, End, Velocity);
+    }
+
+    public int CompareTo(object obj)
+    {
+      return obj is SNote n ? Start.CompareTo(n.Start) : 0;
     }
   }
 }
