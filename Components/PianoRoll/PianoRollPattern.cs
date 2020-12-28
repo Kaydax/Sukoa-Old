@@ -41,7 +41,7 @@ namespace Sukoa.Components
 
   class SelectionDragOffset
   {
-    VelocityEase YOffsetEase = new VelocityEase(0) { Duration = 0.05, Slope = 2, VelocityPower = 1 };
+    VelocityEase YOffsetEase = new VelocityEase(0) { Duration = 0.05, Slope = 1, VelocityPower = 1 };
     VelocityEase XOffsetEase = new VelocityEase(0) { Duration = 0.0, Slope = 2, VelocityPower = 2 };
 
     public Vector2 EaseOffset { get; private set; } = new Vector2();
@@ -78,6 +78,8 @@ namespace Sukoa.Components
 
     public Vector2 SelectionPosOffset => SelectionOffsetPosEase.EaseOffset;
     SelectionDragOffset SelectionOffsetPosEase { get; } = new SelectionDragOffset();
+
+    public double NoteSnapInterval { get; set; } = 1;
 
     public SmoothZoomView ViewFrame { get; } = new SmoothZoomView(0, 128, 0, 100)
     {
@@ -244,6 +246,13 @@ namespace Sukoa.Components
     {
       var yOffset = (float)Math.Round(Math.Floor(offset.Y + start.Y) - Math.Floor(start.Y));
       var xOffset = offset.X;
+
+      if(SelectedNotesBounds.HasValue)
+      {
+        var dist = (SelectedNotesBounds.Value.Left + xOffset) % NoteSnapInterval;
+        xOffset -= (float)dist; 
+      }
+
 
       if(SelectedNotesBounds.HasValue)
       {

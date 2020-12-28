@@ -73,7 +73,7 @@ namespace Sukoa.Components
 
     public PianoRollCanvas(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize, PianoRollPattern pattern) : base(gd, view, computeSize)
     {
-      Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 / 16, new[] { 0, 3, 2, 0, 2, 1 }));
+      Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 * 16, new[] { 0, 3, 2, 0, 2, 1 }));
       PatternHandler = pattern;
       CurrentAction = new PianoRollActionIdle(PatternHandler);
 
@@ -198,6 +198,8 @@ namespace Sukoa.Components
 
       var pattern = PatternHandler.Pattern;
 
+      var nc = 0;
+
       for(int key = 0; key < pattern.Notes.Length; key++)
       {
         var noteKey = pattern.Notes[key];
@@ -220,6 +222,8 @@ namespace Sukoa.Components
           {
             noteCol = new RgbaFloat(0.9f, 0.2f, 0.2f, 1);
           }
+
+          nc++;
           PushNote(new Rectangle(key, (float)note.End, key + 1, (float)note.Start), noteCol);
         }
       }
@@ -235,10 +239,15 @@ namespace Sukoa.Components
 
       if(PatternHandler.SelectionRectangle != null)
       {
+        nc++;
         PushSelectionRectangle(PatternHandler.SelectionRectangle ?? new Rectangle());
       }
 
       Buffer.Flush(cl);
+
+      ImGui.SetCursorPos(ImGui.GetCursorStartPos());
+      ImGui.Text($"Notes rendering: {nc}");
+      ImGui.Text($"Selected notes: {PatternHandler.SelectedNotes.Count()}");
     }
   }
 }
