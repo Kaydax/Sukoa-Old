@@ -72,6 +72,8 @@ namespace Sukoa
         uihost.Render(cl);
         ImGui.ShowDemoWindow();
 
+        ImGui.Text(ImGui.GetIO().Framerate.ToString());
+
         imGui.UpdateViewIO(view);
 
         cl.SetFramebuffer(gd.MainSwapchain.Framebuffer);
