@@ -96,7 +96,8 @@ namespace Sukoa.Renderer
         VertexBufferCache.Add(newBuffer);
       }
       var bufferToWrite = VertexBufferCache[bufferCount - 1];
-      GraphicsDevice.UpdateBuffer(bufferToWrite, 0, ref buffer[0], (uint)(posInBuffer * itemSizeInBytes));
+      lock (GraphicsDevice)
+        GraphicsDevice.UpdateBuffer(bufferToWrite, 0, ref buffer[0], (uint)(posInBuffer * itemSizeInBytes));
       cl.SetVertexBuffer(0, bufferToWrite);
 
       if(indices == null)

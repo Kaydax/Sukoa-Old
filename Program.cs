@@ -71,6 +71,8 @@ namespace Sukoa
         // Compute UI elements, render canvases
         uihost.Render(cl);
 
+        ImGui.Text(ImGui.GetIO().Framerate.ToString());
+
         imGui.UpdateViewIO(view);
 
         cl.SetFramebuffer(gd.MainSwapchain.Framebuffer);

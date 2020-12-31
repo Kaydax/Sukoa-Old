@@ -12,6 +12,7 @@ using ImGuiNET;
 using Sukoa.MIDI;
 using Sukoa.Util;
 using Rectangle = Sukoa.Util.Rectangle;
+using System.Threading;
 
 namespace Sukoa.Components
 {
@@ -29,13 +30,16 @@ namespace Sukoa.Components
       public const uint SizeInBytes = 24;
     }
 
-    BufferList<VertexPositionColor> Buffer { get; }
+    BufferList<VertexPositionColor>[] Buffers { get; }
     DeviceBuffer ProjMatrix { get; set; }
     ResourceLayout Layout { get; set; }
     ResourceSet MainResourceSet { get; set; }
     Shader[] Shaders { get; set; }
     Pipeline Pipeline { get; set; }
     PianoRollPattern PatternHandler { get; }
+
+    public int[] FirstRenderNote { get; } = new int[256];
+    public double LastRenderLeft { get; set; } = 0;
 
     IPianoRollAction CurrentAction { get; set; }
 
@@ -73,7 +77,9 @@ namespace Sukoa.Components
 
     public PianoRollCanvas(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize, PianoRollPattern pattern) : base(gd, view, computeSize)
     {
-      Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 * 16, new[] { 0, 3, 2, 0, 2, 1 }));
+      Buffers = new BufferList<VertexPositionColor>[257]; // first buffer for general purpose, others for keys
+      for(int i = 0; i < 257; i++)
+        Buffers[i] = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 * 16, new[] { 0, 3, 2, 0, 2, 1 }));
       PatternHandler = pattern;
       CurrentAction = new PianoRollActionIdle(PatternHandler);
 
@@ -147,7 +153,8 @@ namespace Sukoa.Components
       cl.SetPipeline(Pipeline);
       cl.SetGraphicsResourceSet(0, MainResourceSet);
 
-      Buffer.Reset();
+      foreach (var x in Buffers)
+        x.Reset();
 
       PatternHandler.Update();
 
@@ -165,34 +172,41 @@ namespace Sukoa.Components
         );
       }
 
-      void PushQuad(Rectangle rect, RgbaFloat col)
+      bool QuadVisible(Rectangle rect)
+      {
+        return rect.Top < canvasSize.Y && rect.Bottom > 0 && rect.Left < canvasSize.X && rect.Right > 0;
+      }
+
+      void PushQuad(int bufferIdx, Rectangle rect, RgbaFloat col)
       {
         float top = rect.Top, bottom = rect.Bottom, left = rect.Left, right = rect.Right;
-        if(top > canvasSize.Y || bottom < 0 || left > canvasSize.X || right < 0) return;
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), col));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), col));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), col));
-        Buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), col));
+        if(!QuadVisible(rect))
+          return;
+        var buffer = Buffers[bufferIdx];
+        buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), col));
+        buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), col));
+        buffer.Push(cl, new VertexPositionColor(new Vector2(right, bottom), col));
+        buffer.Push(cl, new VertexPositionColor(new Vector2(left, bottom), col));
       }
 
       void PushSelectionRectangle(Rectangle rect)
       {
         var scaled = ScaleRectSides(rect);
-        PushQuad(scaled, new RgbaFloat(0.8f, 0.2f, 0.2f, 0.7f));
+        PushQuad(0, scaled, new RgbaFloat(0.8f, 0.2f, 0.2f, 0.7f));
       }
 
-      void PushNote(Rectangle rect, RgbaFloat col)
+      void PushNote(int note, Rectangle rect, RgbaFloat col)
       {
         var borderCol = new RgbaFloat(col.ToVector4() * new Vector4(0.4f, 0.4f, 0.4f, 1));
         rect = ScaleRectSides(rect);
-        PushQuad(rect, borderCol);
+        PushQuad(note + 1, rect, borderCol);
         rect.Top += 1;
         rect.Bottom -= 1;
         rect.Right -= 1;
         rect.Left += 1;
         if(rect.IsValid)
         {
-          PushQuad(rect, col);
+          PushQuad(note + 1, rect, col);
         }
       }
 
@@ -200,11 +214,42 @@ namespace Sukoa.Components
 
       var nc = 0;
 
-      for(int key = 0; key < pattern.Notes.Length; key++)
+      var renderLeft = viewFrame.EaseLeft;
+      Parallel.For(0, pattern.Notes.Length, key =>
       {
         var noteKey = pattern.Notes[key];
-        foreach(var note in noteKey)
+        int noteOffset = FirstRenderNote[key];
+        if(LastRenderLeft > renderLeft)
         {
+          for(noteOffset = 0; noteOffset < noteKey.Count; noteOffset++)
+          {
+            if(noteKey[noteOffset].End > renderLeft)
+              break;
+          }
+          FirstRenderNote[key] = noteOffset;
+        }
+        else if(LastRenderLeft < renderLeft)
+        {
+          for(; noteOffset < noteKey.Count; noteOffset++)
+          {
+            if(noteKey[noteOffset].End > renderLeft)
+              break;
+          }
+          FirstRenderNote[key] = noteOffset;
+        }
+        //foreach(var note in noteKey)
+        if(viewFrame.TransformYToOutside(key + 1) < 0 || viewFrame.TransformYToOutside(key) > 1)
+          return;
+        for(int i = noteOffset; i < noteKey.Count; i++)
+        {
+          var note = noteKey[i];
+          var rect = new Rectangle(key, (float)note.End, key + 1, (float)note.Start);
+
+          if(viewFrame.TransformXToOutside(rect.Left) > 1)
+            break;
+          if(viewFrame.TransformXToOutside(rect.Right) < 0)
+            continue;
+
           // Don't render selected notes yet, render them in the next pass
           if(PatternHandler.IsNoteSelected(note))
           {
@@ -223,10 +268,11 @@ namespace Sukoa.Components
             noteCol = new RgbaFloat(0.9f, 0.2f, 0.2f, 1);
           }
 
-          nc++;
-          PushNote(new Rectangle(key, (float)note.End, key + 1, (float)note.Start), noteCol);
+          Interlocked.Increment(ref nc);
+          PushNote(key, rect, noteCol);
         }
-      }
+      });
+      LastRenderLeft = renderLeft;
 
       var selectionPosOffset = PatternHandler.SelectionPosOffset;
       foreach(var selected in PatternHandler.SelectedNotes)
@@ -234,7 +280,7 @@ namespace Sukoa.Components
         var note = selected.Note;
         var key = selected.Key;
         var noteCol = new RgbaFloat(0.9f, 0.2f, 0.2f, 1);
-        PushNote(new Rectangle(key, (float)note.End, key + 1, (float)note.Start).OffsetBy(selectionPosOffset), noteCol);
+        PushNote(key, new Rectangle(key, (float)note.End, key + 1, (float)note.Start).OffsetBy(selectionPosOffset), noteCol);
       }
 
       if(PatternHandler.SelectionRectangle != null)
@@ -243,7 +289,8 @@ namespace Sukoa.Components
         PushSelectionRectangle(PatternHandler.SelectionRectangle ?? new Rectangle());
       }
 
-      Buffer.Flush(cl);
+      foreach(var x in Buffers)
+        x.Flush(cl);
 
       ImGui.SetCursorPos(ImGui.GetCursorStartPos());
       ImGui.Text($"Notes rendering: {nc}");
