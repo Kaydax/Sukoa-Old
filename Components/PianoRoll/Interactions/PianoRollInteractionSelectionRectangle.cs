@@ -1,4 +1,5 @@
 ﻿using ImGuiNET;
+using Sukoa.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +11,9 @@ namespace Sukoa.Components.PianoRoll.Interactions
 {
   class PianoRollInteractionMoveSelectedNotes : PianoRollInteraction
   {
-    Vector2 StartLocation { get; }
+    Vector2d StartLocation { get; }
 
-    public PianoRollInteractionMoveSelectedNotes(PianoRollPattern pianoRollPattern, Vector2 startLocation) : base(pianoRollPattern)
+    public PianoRollInteractionMoveSelectedNotes(PianoRollPattern pianoRollPattern, Vector2d startLocation) : base(pianoRollPattern)
     {
       StartLocation = startLocation;
     }

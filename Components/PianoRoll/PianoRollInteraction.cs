@@ -93,14 +93,14 @@ namespace Sukoa.Components
       }
     }
 
-    protected Vector2 GetMouseOutsidePos()
+    protected Vector2d GetMouseOutsidePos()
     {
       var pixelPos = ImGui.GetMousePos() - ImGui.GetWindowPos() - ImGui.GetCursorStartPos();
       var relativePos = pixelPos / ImGui.GetItemRectSize();
-      return relativePos;
+      return relativePos.ToDoubleVec();
     }
 
-    protected Vector2 GetMousePos()
+    protected Vector2d GetMousePos()
     {
       return PianoRollPattern.GetPositionInside(GetMouseOutsidePos());
     }

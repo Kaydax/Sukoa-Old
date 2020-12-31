@@ -1,4 +1,5 @@
 ﻿using ImGuiNET;
+using Sukoa.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Sukoa.Components.PianoRoll.Interactions
 {
   class PianoRollInteractionMouseShiftDown : PianoRollInteraction
   {
-    Vector2 ClickLocation { get; }
+    Vector2d ClickLocation { get; }
     SelectedSNote? ClickedNote { get; }
 
     public PianoRollInteractionMouseShiftDown(PianoRollPattern pianoRollPattern) : base(pianoRollPattern)

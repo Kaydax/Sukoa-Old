@@ -35,7 +35,7 @@ namespace Sukoa.Components
 
     public Rectangle GetBoundsRectangle()
     {
-      return new Rectangle(Key, (float)Note.End, Key + 1, (float)Note.Start);
+      return new Rectangle(Key, Note.End, Key + 1, Note.Start);
     }
   }
 
@@ -44,15 +44,15 @@ namespace Sukoa.Components
     VelocityEase YOffsetEase = new VelocityEase(0) { Duration = 0.05, Slope = 1, VelocityPower = 1 };
     VelocityEase XOffsetEase = new VelocityEase(0) { Duration = 0.0, Slope = 2, VelocityPower = 2 };
 
-    public Vector2 EaseOffset { get; private set; } = new Vector2();
-    public Vector2 TrueOffset => new Vector2((float)XOffsetEase.End, (float)YOffsetEase.End);
+    public Vector2d EaseOffset { get; private set; } = new Vector2d();
+    public Vector2d TrueOffset => new Vector2d(XOffsetEase.End, YOffsetEase.End);
 
     public void Update()
     {
-      EaseOffset = new Vector2((float)XOffsetEase.GetValue(), (float)YOffsetEase.GetValue());
+      EaseOffset = new Vector2d(XOffsetEase.GetValue(), YOffsetEase.GetValue());
     }
 
-    public void SetEnd(Vector2 end)
+    public void SetEnd(Vector2d end)
     {
       XOffsetEase.SetEnd(end.X);
       YOffsetEase.SetEnd(end.Y);
@@ -76,7 +76,7 @@ namespace Sukoa.Components
 
     public Rectangle? SelectionRectangle { get; private set; } = null;
 
-    public Vector2 SelectionPosOffset => SelectionOffsetPosEase.EaseOffset;
+    public Vector2d SelectionPosOffset => SelectionOffsetPosEase.EaseOffset;
     SelectionDragOffset SelectionOffsetPosEase { get; } = new SelectionDragOffset();
 
     public double NoteSnapInterval { get; set; } = 1;
@@ -111,7 +111,7 @@ namespace Sukoa.Components
       SelectionOffsetPosEase.Update();
     }
 
-    public SelectedSNote? GetNoteAtLocation(Vector2 location)
+    public SelectedSNote? GetNoteAtLocation(Vector2d location)
     {
       var row = (int)Math.Floor(location.Y);
       if(row < 0 || row > Pattern.Notes.Length) return null;
@@ -142,9 +142,9 @@ namespace Sukoa.Components
       return null;
     }
 
-    public Vector2 GetPositionInside(Vector2 outside)
+    public Vector2d GetPositionInside(Vector2d outside)
     {
-      return new Vector2((float)ViewFrame.TransformXToInside(outside.X), (float)ViewFrame.TransformYToInside(outside.Y));
+      return new Vector2d(ViewFrame.TransformXToInside(outside.X), ViewFrame.TransformYToInside(outside.Y));
     }
 
     public void SelectNote(SNote note, int key)
@@ -242,15 +242,15 @@ namespace Sukoa.Components
       SelectionRectangle = null;
     }
 
-    public void SetSelectionPosOffset(Vector2 start, Vector2 offset)
+    public void SetSelectionPosOffset(Vector2d start, Vector2d offset)
     {
-      var yOffset = (float)Math.Round(Math.Floor(offset.Y + start.Y) - Math.Floor(start.Y));
+      var yOffset = Math.Round(Math.Floor(offset.Y + start.Y) - Math.Floor(start.Y));
       var xOffset = offset.X;
 
       if(SelectedNotesBounds.HasValue)
       {
         var dist = (SelectedNotesBounds.Value.Left + xOffset) % NoteSnapInterval;
-        xOffset -= (float)dist; 
+        xOffset -= dist; 
       }
 
 
@@ -272,7 +272,7 @@ namespace Sukoa.Components
       }
 
 
-      SelectionOffsetPosEase.SetEnd(new Vector2(xOffset, yOffset));
+      SelectionOffsetPosEase.SetEnd(new Vector2d(xOffset, yOffset));
     }
 
     public void ClearSelectionPosOffset()

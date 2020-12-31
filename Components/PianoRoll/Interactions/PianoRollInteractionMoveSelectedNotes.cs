@@ -11,9 +11,9 @@ namespace Sukoa.Components.PianoRoll.Interactions
 {
   class PianoRollInteractionSelectionRectangle : PianoRollInteraction
   {
-    Vector2 StartLocation { get; }
+    Vector2d StartLocation { get; }
 
-    public PianoRollInteractionSelectionRectangle(PianoRollPattern pianoRollPattern, Vector2 startLocation) : base(pianoRollPattern)
+    public PianoRollInteractionSelectionRectangle(PianoRollPattern pianoRollPattern, Vector2d startLocation) : base(pianoRollPattern)
     {
       StartLocation = startLocation;
     }

@@ -179,9 +179,9 @@ namespace Sukoa.Components
 
       void PushQuad(int bufferIdx, Rectangle rect, RgbaFloat col)
       {
-        float top = rect.Top, bottom = rect.Bottom, left = rect.Left, right = rect.Right;
         if(!QuadVisible(rect))
           return;
+        float top = (float)rect.Top, bottom = (float)rect.Bottom, left = (float)rect.Left, right = (float)rect.Right;
         var buffer = Buffers[bufferIdx];
         buffer.Push(cl, new VertexPositionColor(new Vector2(left, top), col));
         buffer.Push(cl, new VertexPositionColor(new Vector2(right, top), col));
