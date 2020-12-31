@@ -21,7 +21,7 @@ namespace Sukoa.UI
 
     }
 
-    public String Label { get; set; }
+    public string Label { get; set; }
     public UIProperty<bool> Checked { get; set; } = new UIValueProperty<bool>(false);
 
     public override void Render(CommandList cl)
