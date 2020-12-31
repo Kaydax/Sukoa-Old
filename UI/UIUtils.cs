@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ImGuiNET;
 using Sukoa.Components;
+using Sukoa.Components.PianoRoll;
 using Sukoa.MIDI;
 using Sukoa.Renderer;
 using Veldrid;

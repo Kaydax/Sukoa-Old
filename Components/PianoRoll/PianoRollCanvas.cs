@@ -14,6 +14,7 @@ using Sukoa.Util;
 using Rectangle = Sukoa.Util.Rectangle;
 using Sukoa.Components.PianoRoll.Interactions;
 using System.Threading;
+using Sukoa.Components.PianoRoll;
 
 namespace Sukoa.Components
 {
