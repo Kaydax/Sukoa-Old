@@ -10,10 +10,12 @@ namespace Sukoa.UI
 {
   public class UIMenu : UIContainer
   {
-    public UIMenu(string label)
+    public UIMenu(string label, IEnumerable<IUIComponent> children) : base(children)
     {
       Label = label;
     }
+
+    public UIMenu(string label) : this(label, Enumerable.Empty<IUIComponent>()) { }
 
     public String Label { get; set; }
 

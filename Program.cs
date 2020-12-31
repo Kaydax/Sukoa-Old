@@ -31,29 +31,20 @@ namespace Sukoa
       ImGui.GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
       // Initialize imgui UI
-      var uihost = new UIHost();
+      var uihost = dispose.Add(new UIHost());
 
-      var uiwindow = dispose.Add(new UIWindow());
-      uiwindow.Name = "Abstracted ImGui!";
-      uiwindow.Children.Add(new UIText("Test Text"));
-      uiwindow.Children.Add(new UICheckbox("Test Checkbox", false));
+      var uiwindow = new UIWindow("Abstracted ImGui!", new IUIComponent[] { new UIText("Test Text"), new UICheckbox("Test Checkbox", false) });
       uihost.Children.Add(uiwindow);
 
-      var mainmenu = dispose.Add(new UIMainMenuBar());
+      var mainmenu = new UIMainMenuBar();
       var menu = new UIMenu("Hello World!");
       menu.Children.Add(new UIMenuItem("Test 1"));
       menu.Children.Add(new UIMenuItem("Test 2", "CTRL+Z"));
       mainmenu.Children.Add(menu);
       uihost.Children.Add(mainmenu);
 
-      var canvasWindow = dispose.Add(new UIWindow());
       var pattern = new MIDIPattern();
-      pattern.GenNotes();
-      var pianoPattern = new PianoRollPattern(pattern);
-      var testCanvas = new PianoRollCanvas(gd, imGui, ImGui.GetContentRegionAvail, pianoPattern);
-      canvasWindow.Name = "Test canvas renderer";
-      canvasWindow.Children.Add(testCanvas);
-      uihost.Children.Add(canvasWindow);
+      uihost.Children.Add(UIUtils.CreatePianoRollWindow(pattern, gd, imGui));
 
       Stopwatch frameTimer = new Stopwatch();
       frameTimer.Start();

@@ -11,6 +11,13 @@ namespace Sukoa.UI
   {
     public List<IUIComponent> Children { get; } = new List<IUIComponent>();
 
+    public UIContainer(IEnumerable<IUIComponent> children)
+    {
+      Children.AddRange(children);
+    }
+
+    public UIContainer() { }
+
     public abstract void Render(CommandList cl);
 
     protected void RenderChildren(CommandList cl)
