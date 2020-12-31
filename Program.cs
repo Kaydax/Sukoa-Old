@@ -70,6 +70,7 @@ namespace Sukoa
 
         // Compute UI elements, render canvases
         uihost.Render(cl);
+        ImGui.ShowDemoWindow();
 
         imGui.UpdateViewIO(view);
 

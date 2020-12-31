@@ -12,6 +12,7 @@ using ImGuiNET;
 using Sukoa.MIDI;
 using Sukoa.Util;
 using Rectangle = Sukoa.Util.Rectangle;
+using Sukoa.Components.PianoRoll.Interactions;
 
 namespace Sukoa.Components
 {
@@ -37,7 +38,7 @@ namespace Sukoa.Components
     Pipeline Pipeline { get; set; }
     PianoRollPattern PatternHandler { get; }
 
-    IPianoRollAction CurrentAction { get; set; }
+    IPianoRollInteraction CurrentInteraction { get; set; }
 
     const string VertexCode = @"
       #version 450
@@ -75,7 +76,7 @@ namespace Sukoa.Components
     {
       Buffer = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 * 16, new[] { 0, 3, 2, 0, 2, 1 }));
       PatternHandler = pattern;
-      CurrentAction = new PianoRollActionIdle(PatternHandler);
+      CurrentInteraction = new PianoRollInteractionIdle(PatternHandler);
 
       ProjMatrix = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
       dispose.Add(ProjMatrix);
@@ -127,10 +128,10 @@ namespace Sukoa.Components
     {
       base.ProcessInputs();
 
-      CurrentAction.Act();
-      while(CurrentAction.NextAction != null)
+      CurrentInteraction.Act();
+      while(CurrentInteraction.NextInteraction != null)
       {
-        CurrentAction = CurrentAction.NextAction;
+        CurrentInteraction = CurrentInteraction.NextInteraction;
       }
     }
 
