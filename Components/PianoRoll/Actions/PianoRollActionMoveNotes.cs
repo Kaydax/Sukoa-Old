@@ -64,7 +64,7 @@ namespace Sukoa.Components.PianoRoll.Actions
 
       var editedSelection = NotesToMove.Select(n => new SelectedSNote(n.Note, n.Key + keyOffset)).ToList();
       PianoRollPattern.DeselectAllNotes();
-      PianoRollPattern.SelectNote(editedSelection);
+      PianoRollPattern.SelectNoteRange(editedSelection);
     }
 
     protected override void UndoInternal()
