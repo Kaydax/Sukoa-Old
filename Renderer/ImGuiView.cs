@@ -125,133 +125,45 @@ namespace Sukoa.Renderer
 
       io.Fonts.AddFontDefault();
 
-      CreateDeviceResources(gd, outputDescription);
-      SetKeyMappings();
-
-      SetPerFrameImGuiData(1f / 60f, width, height);
-      UpdateMonitors();
-
-      ImGui.NewFrame();
-      _frameBegun = true;
-    }
-
-    private void CreateWindow(ImGuiViewportPtr vp)
-    {
-      VeldridImGuiWindow window = new VeldridImGuiWindow(_gd, vp);
-    }
-
-    private void DestroyWindow(ImGuiViewportPtr vp)
-    {
-      if(vp.PlatformUserData != IntPtr.Zero)
-      {
-        VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-        window.Dispose();
-
-        vp.PlatformUserData = IntPtr.Zero;
-      }
-    }
-
-    private void ShowWindow(ImGuiViewportPtr vp)
-    {
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      Sdl2Native.SDL_ShowWindow(window.Window.SdlWindowHandle);
-    }
-
-    private unsafe void GetWindowPos(ImGuiViewportPtr vp, Vector2* outPos)
-    {
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      *outPos = new Vector2(window.Window.Bounds.X, window.Window.Bounds.Y);
-    }
-
-    private void SetWindowPos(ImGuiViewportPtr vp, Vector2 pos)
-    {
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      window.Window.X = (int)pos.X;
-      window.Window.Y = (int)pos.Y;
-    }
-
-    private void SetWindowSize(ImGuiViewportPtr vp, Vector2 size)
-    {
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      Sdl2Native.SDL_SetWindowSize(window.Window.SdlWindowHandle, (int)size.X, (int)size.Y);
-    }
-
-    private unsafe void GetWindowSize(ImGuiViewportPtr vp, Vector2* outSize)
-    {
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      Rectangle bounds = window.Window.Bounds;
-      *outSize = new Vector2(bounds.Width, bounds.Height);
-    }
-
-    private delegate void SDL_RaiseWindow_t(IntPtr sdl2Window);
-    private static SDL_RaiseWindow_t p_sdl_RaiseWindow;
-
-    private unsafe delegate uint SDL_GetGlobalMouseState_t(int* x, int* y);
-    private static SDL_GetGlobalMouseState_t p_sdl_GetGlobalMouseState;
-
-    private unsafe delegate int SDL_GetDisplayUsableBounds_t(int displayIndex, Rectangle* rect);
-    private static SDL_GetDisplayUsableBounds_t p_sdl_GetDisplayUsableBounds_t;
-
-    private delegate int SDL_GetNumVideoDisplays_t();
-    private static SDL_GetNumVideoDisplays_t p_sdl_GetNumVideoDisplays;
-
-    private void SetWindowFocus(ImGuiViewportPtr vp)
-    {
-      if(p_sdl_RaiseWindow == null)
-      {
-        p_sdl_RaiseWindow = Sdl2Native.LoadFunction<SDL_RaiseWindow_t>("SDL_RaiseWindow");
-      }
-
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      p_sdl_RaiseWindow(window.Window.SdlWindowHandle);
-    }
-
-    private byte GetWindowFocus(ImGuiViewportPtr vp)
-    {
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      SDL_WindowFlags flags = Sdl2Native.SDL_GetWindowFlags(window.Window.SdlWindowHandle);
-      return (flags & SDL_WindowFlags.InputFocus) != 0 ? (byte)1 : (byte)0;
-    }
-
-    private byte GetWindowMinimized(ImGuiViewportPtr vp)
-    {
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      SDL_WindowFlags flags = Sdl2Native.SDL_GetWindowFlags(window.Window.SdlWindowHandle);
-      return (flags & SDL_WindowFlags.Minimized) != 0 ? (byte)1 : (byte)0;
-    }
-
-    private unsafe void SetWindowTitle(ImGuiViewportPtr vp, IntPtr title)
-    {
-      VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-      byte* titlePtr = (byte*)title;
-      int count = 0;
-      while(titlePtr[count] != 0)
-      {
-        titlePtr += 1;
-      }
-      window.Window.Title = System.Text.Encoding.ASCII.GetString(titlePtr, count);
-    }
-
-    public void WindowResized(int width, int height)
-    {
-      _windowWidth = width;
-      _windowHeight = height;
-    }
-
-    public void DestroyDeviceObjects()
-    {
-      Dispose();
-    }
-
-    public void CreateDeviceResources(GraphicsDevice gd, OutputDescription outputDescription)
-    {
+      // Create general resources
       _gd = gd;
       ResourceFactory factory = gd.ResourceFactory;
       _vertexBuffer = factory.CreateBuffer(new BufferDescription(10000, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
       _vertexBuffer.Name = "ImGui.NET Vertex Buffer";
       _indexBuffer = factory.CreateBuffer(new BufferDescription(2000, BufferUsage.IndexBuffer | BufferUsage.Dynamic));
       _indexBuffer.Name = "ImGui.NET Index Buffer";
-      RecreateFontDeviceTexture(gd);
+
+
+      byte* pixels;
+      int fwidth, fheight, bytesPerPixel;
+      io.Fonts.GetTexDataAsRGBA32(out pixels, out fwidth, out fheight, out bytesPerPixel);
+      // Store our identifier
+      io.Fonts.SetTexID(_fontAtlasID);
+
+      _fontTexture = gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
+          (uint)fwidth,
+          (uint)fheight,
+          1,
+          1,
+          PixelFormat.R8_G8_B8_A8_UNorm,
+          TextureUsage.Sampled));
+      _fontTexture.Name = "ImGui.NET Font Texture";
+      gd.UpdateTexture(
+          _fontTexture,
+          (IntPtr)pixels,
+          (uint)(bytesPerPixel * fwidth * fheight),
+          0,
+          0,
+          0,
+          (uint)fwidth,
+          (uint)fheight,
+          1,
+          0,
+          0);
+      _fontTextureView = gd.ResourceFactory.CreateTextureView(_fontTexture);
+
+      io.Fonts.ClearTexData();
+
 
       _projMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
       _projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
@@ -290,6 +202,132 @@ namespace Sukoa.Renderer
           gd.PointSampler));
 
       _fontTextureResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, _fontTextureView));
+
+
+      SetKeyMappings();
+
+      SetPerFrameImGuiData(1f / 60f, width, height);
+      UpdateMonitors();
+
+      ImGui.NewFrame();
+      _frameBegun = true;
+    }
+
+    private void CreateWindow(ImGuiViewportPtr vp)
+    {
+      VeldridImGuiWindow window = new VeldridImGuiWindow(_gd, vp);
+    }
+
+    private void DestroyWindow(ImGuiViewportPtr vp)
+    {
+      if(vp.PlatformUserData != IntPtr.Zero)
+      {
+        VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+        window?.Dispose();
+
+        vp.PlatformUserData = IntPtr.Zero;
+      }
+    }
+
+    private void ShowWindow(ImGuiViewportPtr vp)
+    {
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      Sdl2Native.SDL_ShowWindow(window.Window.SdlWindowHandle);
+    }
+
+    private unsafe void GetWindowPos(ImGuiViewportPtr vp, Vector2* outPos)
+    {
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      *outPos = new Vector2(window.Window.Bounds.X, window.Window.Bounds.Y);
+    }
+
+    private void SetWindowPos(ImGuiViewportPtr vp, Vector2 pos)
+    {
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      window.Window.X = (int)pos.X;
+      window.Window.Y = (int)pos.Y;
+    }
+
+    private void SetWindowSize(ImGuiViewportPtr vp, Vector2 size)
+    {
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      Sdl2Native.SDL_SetWindowSize(window.Window.SdlWindowHandle, (int)size.X, (int)size.Y);
+    }
+
+    private unsafe void GetWindowSize(ImGuiViewportPtr vp, Vector2* outSize)
+    {
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      Rectangle bounds = window.Window.Bounds;
+      *outSize = new Vector2(bounds.Width, bounds.Height);
+    }
+
+    private delegate void SDL_RaiseWindow_t(IntPtr sdl2Window);
+    private static SDL_RaiseWindow_t? p_sdl_RaiseWindow;
+
+    private unsafe delegate uint SDL_GetGlobalMouseState_t(int* x, int* y);
+    private static SDL_GetGlobalMouseState_t? p_sdl_GetGlobalMouseState;
+
+    private unsafe delegate int SDL_GetDisplayUsableBounds_t(int displayIndex, Rectangle* rect);
+    private static SDL_GetDisplayUsableBounds_t? p_sdl_GetDisplayUsableBounds_t;
+
+    private delegate int SDL_GetNumVideoDisplays_t();
+    private static SDL_GetNumVideoDisplays_t? p_sdl_GetNumVideoDisplays;
+
+    private void SetWindowFocus(ImGuiViewportPtr vp)
+    {
+      if(p_sdl_RaiseWindow == null)
+      {
+        p_sdl_RaiseWindow = Sdl2Native.LoadFunction<SDL_RaiseWindow_t>("SDL_RaiseWindow");
+      }
+
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      p_sdl_RaiseWindow(window.Window.SdlWindowHandle);
+    }
+
+    private byte GetWindowFocus(ImGuiViewportPtr vp)
+    {
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      SDL_WindowFlags flags = Sdl2Native.SDL_GetWindowFlags(window.Window.SdlWindowHandle);
+      return (flags & SDL_WindowFlags.InputFocus) != 0 ? (byte)1 : (byte)0;
+    }
+
+    private byte GetWindowMinimized(ImGuiViewportPtr vp)
+    {
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      SDL_WindowFlags flags = Sdl2Native.SDL_GetWindowFlags(window.Window.SdlWindowHandle);
+      return (flags & SDL_WindowFlags.Minimized) != 0 ? (byte)1 : (byte)0;
+    }
+
+    private unsafe void SetWindowTitle(ImGuiViewportPtr vp, IntPtr title)
+    {
+      VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+      if(window == null) throw new NullReferenceException();
+      byte* titlePtr = (byte*)title;
+      int count = 0;
+      while(titlePtr[count] != 0)
+      {
+        titlePtr += 1;
+      }
+      window.Window.Title = System.Text.Encoding.ASCII.GetString(titlePtr, count);
+    }
+
+    public void WindowResized(int width, int height)
+    {
+      _windowWidth = width;
+      _windowHeight = height;
+    }
+
+    public void DestroyDeviceObjects()
+    {
+      Dispose();
     }
 
     /// <summary>
@@ -323,7 +361,7 @@ namespace Sukoa.Renderer
     /// </summary>
     public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture)
     {
-      if(!_autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
+      if(!_autoViewsByTexture.TryGetValue(texture, out TextureView? textureView))
       {
         textureView = factory.CreateTextureView(texture);
         _autoViewsByTexture.Add(texture, textureView);
@@ -392,50 +430,13 @@ namespace Sukoa.Renderer
     private byte[] GetEmbeddedResourceBytes(string resourceName)
     {
       Assembly assembly = typeof(ImGuiView).Assembly;
-      using(Stream s = assembly.GetManifestResourceStream(resourceName))
+      using(Stream? s = assembly.GetManifestResourceStream(resourceName))
       {
+        if(s == null) throw new KeyNotFoundException($"Resource with key {resourceName} not found");
         byte[] ret = new byte[s.Length];
         s.Read(ret, 0, (int)s.Length);
         return ret;
       }
-    }
-
-    /// <summary>
-    /// Recreates the device texture used to render text.
-    /// </summary>
-    public unsafe void RecreateFontDeviceTexture(GraphicsDevice gd)
-    {
-      ImGuiIOPtr io = ImGui.GetIO();
-      // Build
-      byte* pixels;
-      int width, height, bytesPerPixel;
-      io.Fonts.GetTexDataAsRGBA32(out pixels, out width, out height, out bytesPerPixel);
-      // Store our identifier
-      io.Fonts.SetTexID(_fontAtlasID);
-
-      _fontTexture = gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
-          (uint)width,
-          (uint)height,
-          1,
-          1,
-          PixelFormat.R8_G8_B8_A8_UNorm,
-          TextureUsage.Sampled));
-      _fontTexture.Name = "ImGui.NET Font Texture";
-      gd.UpdateTexture(
-          _fontTexture,
-          (IntPtr)pixels,
-          (uint)(bytesPerPixel * width * height),
-          0,
-          0,
-          0,
-          (uint)width,
-          (uint)height,
-          1,
-          0,
-          0);
-      _fontTextureView = gd.ResourceFactory.CreateTextureView(_fontTexture);
-
-      io.Fonts.ClearTexData();
     }
 
     /// <summary>
@@ -460,9 +461,13 @@ namespace Sukoa.Renderer
           for(int i = 1; i < platformIO.Viewports.Size; i++)
           {
             ImGuiViewportPtr vp = platformIO.Viewports[i];
-            VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-            cl.SetFramebuffer(window.Swapchain.Framebuffer);
-            RenderImDrawData(vp.DrawData, gd, cl);
+            VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+            if(window == null) throw new NullReferenceException();
+            if(window.Swapchain != null)
+            {
+              cl.SetFramebuffer(window.Swapchain.Framebuffer);
+              RenderImDrawData(vp.DrawData, gd, cl);
+            }
           }
         }
       }
@@ -474,7 +479,8 @@ namespace Sukoa.Renderer
       for(int i = 1; i < platformIO.Viewports.Size; i++)
       {
         ImGuiViewportPtr vp = platformIO.Viewports[i];
-        VeldridImGuiWindow window = (VeldridImGuiWindow)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+        VeldridImGuiWindow? window = (VeldridImGuiWindow?)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+        if(window == null) throw new NullReferenceException();
         gd.SwapBuffers(window.Swapchain);
       }
     }

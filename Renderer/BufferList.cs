@@ -17,18 +17,18 @@ namespace Sukoa.Renderer
     DisposeGroup dispose = new DisposeGroup();
 
     List<DeviceBuffer> VertexBufferCache { get; } = new List<DeviceBuffer>();
-    DeviceBuffer IndexBuffer { get; } = null;
+    DeviceBuffer? IndexBuffer { get; } = null;
 
     int bufferPos = 0;
 
-    int[] indices;
+    int[]? indices;
     int indicesPerShape;
     int vertsPerShape;
 
     T[] buffer;
     int itemSizeInBytes;
 
-    public BufferList(GraphicsDevice gd, int bufferSize, int[] indices = null)
+    public BufferList(GraphicsDevice gd, int bufferSize, int[]? indices = null)
     {
       itemSizeInBytes = Unsafe.SizeOf<T>();
       GraphicsDevice = gd;

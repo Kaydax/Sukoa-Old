@@ -36,7 +36,7 @@ namespace Sukoa
       return itemlist;
     }
 
-    public T Replace<T>(T prevItem, T newItem) where T : IDisposable
+    public T Replace<T>(T? prevItem, T newItem) where T : IDisposable
     {
       if (disposed) throw new Exception("Can't add items to a disposed DisposeGroup");
       if (prevItem != null)
@@ -55,7 +55,7 @@ namespace Sukoa
       return newItem;
     }
 
-    public void Remove<T>(T item) where T : IDisposable
+    public void Remove<T>(T? item) where T : IDisposable
     {
       if (item != null)
       {
@@ -65,7 +65,7 @@ namespace Sukoa
       }
     }
 
-    public void Remove<T>(ref T item) where T : IDisposable
+    public void Remove<T>(ref T? item) where T : IDisposable
     {
       Remove(item);
       item = default(T);

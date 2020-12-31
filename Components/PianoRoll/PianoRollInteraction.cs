@@ -15,7 +15,7 @@ namespace Sukoa.Components
   {
     // Next interaction to use. If NextInteraction is set, then this interaction is ended.
     bool IsEnded => NextInteraction != null;
-    IPianoRollInteraction NextInteraction { get; }
+    IPianoRollInteraction? NextInteraction { get; }
     void Act();
   }
 
@@ -37,7 +37,7 @@ namespace Sukoa.Components
 
     public PianoRollPattern PianoRollPattern { get; }
 
-    public IPianoRollInteraction NextInteraction { get; private set; }
+    public IPianoRollInteraction? NextInteraction { get; private set; }
 
 
     public void Act()
@@ -49,12 +49,12 @@ namespace Sukoa.Components
       }
     }
 
-    protected void ContinueWith(IPianoRollInteraction interaction)
+    protected void ContinueWith(IPianoRollInteraction? interaction)
     {
       NextInteraction = interaction;
     }
 
-    public virtual IPianoRollInteraction DoInteraction()
+    public virtual IPianoRollInteraction? DoInteraction()
     {
       HandleZoomInteraction();
       return null;

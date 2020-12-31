@@ -13,10 +13,10 @@ namespace Sukoa.Renderer
     private readonly GraphicsDevice _gd;
     private readonly ImGuiViewportPtr _vp;
     private readonly Sdl2Window _window;
-    private readonly Swapchain _sc;
+    private readonly Swapchain? _sc;
 
     public Sdl2Window Window => _window;
-    public Swapchain Swapchain => _sc;
+    public Swapchain? Swapchain => _sc;
 
     public VeldridImGuiWindow(GraphicsDevice gd, ImGuiViewportPtr vp)
     {
@@ -78,7 +78,7 @@ namespace Sukoa.Renderer
     public void Dispose()
     {
       _gd.WaitForIdle(); // TODO: Shouldn't be necessary, but Vulkan backend trips a validation error (swapchain in use when disposed).
-      _sc.Dispose();
+      _sc?.Dispose();
       _window.Close();
       _gcHandle.Free();
     }

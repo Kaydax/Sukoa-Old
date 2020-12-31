@@ -13,10 +13,11 @@ namespace Sukoa.UI
     public UIProperty(Func<T> get, Action<T> set)
     {
       Get = get;
+      this.set = set;
       Set = set;
     }
 
-    public event EventHandler<T> ValueChanged;
+    public event EventHandler<T>? ValueChanged;
 
     public Func<T> Get { get; protected set; }
     public Action<T> Set

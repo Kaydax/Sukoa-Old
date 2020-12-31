@@ -18,7 +18,7 @@ namespace Sukoa.Components.PianoRoll.Interactions
       StartLocation = startLocation;
     }
 
-    public override IPianoRollInteraction DoInteraction()
+    public override IPianoRollInteraction? DoInteraction()
     {
       base.DoInteraction();
 

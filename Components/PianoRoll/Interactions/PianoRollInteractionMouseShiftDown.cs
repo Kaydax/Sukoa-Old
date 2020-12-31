@@ -33,7 +33,7 @@ namespace Sukoa.Components.PianoRoll.Interactions
       ContinueWith(null);
     }
 
-    public override IPianoRollInteraction DoInteraction()
+    public override IPianoRollInteraction? DoInteraction()
     {
       base.DoInteraction();
       if(!ImGui.IsMouseDown(ImGuiMouseButton.Left))

@@ -23,7 +23,7 @@ namespace Sukoa.Components
     public static bool operator ==(SelectedSNote a, SelectedSNote b) => a.Equals(b);
     public static bool operator !=(SelectedSNote a, SelectedSNote b) => !a.Equals(b);
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
       return obj is SelectedSNote note && EqualityComparer<SNote>.Default.Equals(Note, note.Note);
     }

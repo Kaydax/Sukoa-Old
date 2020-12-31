@@ -10,14 +10,14 @@ namespace Sukoa.UI
 {
   public class UIMenuItem : UIComponent
   {
-    public UIMenuItem(string label, string shortcut = null)
+    public UIMenuItem(string label, string? shortcut = null)
     {
       Label = label;
       Shortcut = shortcut;
     }
 
-    public String Label { get; set; }
-    public String Shortcut { get; set; }
+    public string Label { get; set; }
+    public string? Shortcut { get; set; }
 
     public override void Render(CommandList cl)
     {

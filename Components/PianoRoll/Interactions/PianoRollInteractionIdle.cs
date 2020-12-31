@@ -14,7 +14,7 @@ namespace Sukoa.Components.PianoRoll.Interactions
 
     }
 
-    public override IPianoRollInteraction DoInteraction()
+    public override IPianoRollInteraction? DoInteraction()
     {
       base.DoInteraction();
       if(ImGui.IsItemHovered())

@@ -10,7 +10,7 @@ namespace Sukoa.UI
   {
     T value;
 
-    public UIValueProperty(T value) : base(() => default(T), v => { })
+    public UIValueProperty(T value) : base(() => default(T)!, v => { })
     {
       this.value = value;
       this.Get = () => this.value;

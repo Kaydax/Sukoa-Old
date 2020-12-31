@@ -53,7 +53,7 @@ namespace Sukoa.MIDI
       return new SNote(Start, End, Velocity);
     }
 
-    public int CompareTo(object obj)
+    public int CompareTo(object? obj)
     {
       return obj is SNote n ? Start.CompareTo(n.Start) : 0;
     }
