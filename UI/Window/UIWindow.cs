@@ -10,19 +10,19 @@ namespace Sukoa.UI
 {
   public class UIWindow : UIContainer
   {
-    public String Name { get; set; }
+    public string Name { get; set; }
     public UIProperty<bool> Open { get; set; }
     public ImGuiWindowFlags Flags { get; set; }
 
-    public UIWindow(String name, UIProperty<bool> open, ImGuiWindowFlags flags, IEnumerable<IUIComponent> children) : base(children)
+    public UIWindow(string name, UIProperty<bool> open, ImGuiWindowFlags flags, IEnumerable<IUIComponent> children) : base(children)
     {
       Name = name;
       Open = open;
       Flags = flags;
     }
 
-    public UIWindow(String name, IEnumerable<IUIComponent> children) : this(name, new UIValueProperty<bool>(true), ImGuiWindowFlags.None, children) { }
-    public UIWindow(String name) : this(name, Enumerable.Empty<IUIComponent>()) { }
+    public UIWindow(string name, IEnumerable<IUIComponent> children) : this(name, new UIValueProperty<bool>(true), ImGuiWindowFlags.None, children) { }
+    public UIWindow(string name) : this(name, Enumerable.Empty<IUIComponent>()) { }
 
     public override void Render(CommandList cl)
     {

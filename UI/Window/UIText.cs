@@ -15,7 +15,7 @@ namespace Sukoa.UI
       Text = text;
     }
 
-    public String Text { get; set; }
+    public string Text { get; set; }
 
     public override void Render(CommandList cl)
     {

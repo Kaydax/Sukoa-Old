@@ -17,7 +17,7 @@ namespace Sukoa.UI
 
     public UIMenu(string label) : this(label, Enumerable.Empty<IUIComponent>()) { }
 
-    public String Label { get; set; }
+    public string Label { get; set; }
 
     public override void Render(CommandList cl)
     {
