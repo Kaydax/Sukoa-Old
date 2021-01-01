@@ -30,22 +30,18 @@ namespace Sukoa
       var imGui = new ImGuiView(gd, view.Window, gd.MainSwapchain.Framebuffer.OutputDescription, view.Width, view.Height);
       ImGui.GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
-      // Initialize imgui UI
-      var uihost = dispose.Add(new UIHost());
+      //Create ImGui Windows
+      var menu = new UIMenu("Hello World!", new IUIComponent[] { new UIMenuItem("Test 1"), new UIMenuItem("Test 2", "CTRL+Z") });
+      var mainmenu = new UIMainMenuBar(new IUIComponent[] { menu });
 
       var uiwindow = new UIWindow("Abstracted ImGui!", new IUIComponent[] { new UIText("Test Text"), new UICheckbox("Test Checkbox", false) });
-      uihost.Children.Add(uiwindow);
-
-      var mainmenu = new UIMainMenuBar();
-      var menu = new UIMenu("Hello World!");
-      menu.Children.Add(new UIMenuItem("Test 1"));
-      menu.Children.Add(new UIMenuItem("Test 2", "CTRL+Z"));
-      mainmenu.Children.Add(menu);
-      uihost.Children.Add(mainmenu);
-
+      
       var pattern = new MIDIPattern();
-      uihost.Children.Add(UIUtils.CreatePianoRollWindow(pattern, gd, imGui));
+      var pianoRollWindow = UIUtils.CreatePianoRollWindow(pattern, gd, imGui);
 
+      // Initialize imgui UI
+      var uihost = dispose.Add(new UIHost(new IUIComponent[] { mainmenu, uiwindow, pianoRollWindow }));
+      
       Stopwatch frameTimer = new Stopwatch();
       frameTimer.Start();
 
