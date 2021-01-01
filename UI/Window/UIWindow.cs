@@ -21,7 +21,7 @@ namespace Sukoa.UI
       Flags = flags;
     }
 
-    public UIWindow(string name, IEnumerable<IUIComponent> children) : this(name, new UIValueProperty<bool>(true), ImGuiWindowFlags.None, children) { }
+    public UIWindow(string name, IEnumerable<IUIComponent> children) : this(name, true, ImGuiWindowFlags.None, children) { }
     public UIWindow(string name) : this(name, Enumerable.Empty<IUIComponent>()) { }
 
     public override void Render(CommandList cl)

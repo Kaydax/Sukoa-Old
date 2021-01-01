@@ -1,4 +1,5 @@
 ﻿using Sukoa.MIDI;
+using Sukoa.UI;
 using Sukoa.Util;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace Sukoa.Components.PianoRoll
 
     public SmoothZoomView ViewFrame { get; } = new SmoothZoomView(0, 128, 0, 100)
     {
-      MaxBottom = 128,
+      MaxBottom = new UIProperty<double>(() => Constants.KeyCount),
       MaxTop = 0,
       MaxLeft = 0,
     };

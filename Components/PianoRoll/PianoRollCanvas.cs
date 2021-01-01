@@ -41,7 +41,7 @@ namespace Sukoa.Components
     PianoRollPattern PatternHandler { get; }
 
     IPianoRollInteraction CurrentInteraction { get; set; }
-    public int[] FirstRenderNote { get; } = new int[256];
+    public int[] FirstRenderNote { get; } = new int[Constants.KeyCount];
     public double LastRenderLeft { get; set; } = 0;
 
     const string VertexCode = @"

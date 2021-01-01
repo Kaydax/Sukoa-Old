@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Sukoa.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sukoa.Util
+namespace Sukoa.UI
 {
   public class SmoothZoomView
   {
@@ -35,15 +36,15 @@ namespace Sukoa.Util
     public double TrueWidth => TrueRight - TrueLeft;
     public double TrueHeight => TrueBottom - TrueTop;
 
-    public double MaxLeft { get; set; } = double.NaN;
-    public double MaxRight { get; set; } = double.NaN;
-    public double MaxTop { get; set; } = double.NaN;
-    public double MaxBottom { get; set; } = double.NaN;
+    public UIProperty<double> MaxLeft { get; set; } = double.NaN;
+    public UIProperty<double> MaxRight { get; set; } = double.NaN;
+    public UIProperty<double> MaxTop { get; set; } = double.NaN;
+    public UIProperty<double> MaxBottom { get; set; } = double.NaN;
 
-    public double MinWidth { get; set; } = double.NaN;
-    public double MinHeight { get; set; } = double.NaN;
-    public double MaxWidth { get; set; } = double.NaN;
-    public double MaxHeight { get; set; } = double.NaN;
+    public UIProperty<double> MinWidth { get; set; } = double.NaN;
+    public UIProperty<double> MinHeight { get; set; } = double.NaN;
+    public UIProperty<double> MaxWidth { get; set; } = double.NaN;
+    public UIProperty<double> MaxHeight { get; set; } = double.NaN;
 
     public SmoothZoomView(double top, double bottom, double left, double right)
     {

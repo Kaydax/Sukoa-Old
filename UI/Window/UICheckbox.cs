@@ -16,11 +16,6 @@ namespace Sukoa.UI
       Checked = @checked;
     }
 
-    public UICheckbox(string label, bool @checked) : this(label, new UIValueProperty<bool>(@checked))
-    {
-
-    }
-
     public string Label { get; set; }
     public UIProperty<bool> Checked { get; set; } = new UIValueProperty<bool>(false);
 
