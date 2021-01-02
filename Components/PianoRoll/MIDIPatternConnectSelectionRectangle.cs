@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll
 {
-  public partial class PianoRollPattern
+  public partial class MIDIPatternConnect
   {
     public Rectangle? SelectionRectangle { get; private set; } = null;
 

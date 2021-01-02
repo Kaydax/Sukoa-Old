@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll
 {
-  public partial class PianoRollPattern
+  public partial class MIDIPatternConnect
   {
     HashSet<SelectedSNote> SelectedNotesHashset { get; } = new HashSet<SelectedSNote>();
     public IEnumerable<SelectedSNote> SelectedNotes => SelectedNotesHashset;

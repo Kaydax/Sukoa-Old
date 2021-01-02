@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll
 {
-  public partial class PianoRollPattern
+  public partial class MIDIPatternConnect
   {
     class SelectionDragOffset
     {
@@ -83,7 +83,7 @@ namespace Sukoa.Components.PianoRoll
       double xOffset = SelectionOffsetPosEase.TrueOffset.X;
       int keyOffset = (int)Math.Round(SelectionOffsetPosEase.TrueOffset.Y);
 
-      var action = new PianoRollActionMoveNotes(this, SelectedNotes, xOffset, keyOffset);
+      var action = new MIDIPatternActionMoveNotes(this, SelectedNotes, xOffset, keyOffset);
       action.Apply();
 
       ClearSelectionPosOffset();

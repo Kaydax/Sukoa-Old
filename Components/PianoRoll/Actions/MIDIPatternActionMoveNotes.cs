@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll.Actions
 {
-  public class PianoRollActionMoveNotes : PianoRollAction
+  public class MIDIPatternActionMoveNotes : MIDIPatternAction
   {
     public double Ticks { get; }
     public int Keys { get; }
 
     PerKeyArray<HashSet<int>> NoteLocations { get; set; }
 
-    public PianoRollActionMoveNotes(PianoRollPattern pattern, IEnumerable<SelectedSNote> notesToMove, double ticks, int keys) : base(pattern)
+    public MIDIPatternActionMoveNotes(MIDIPatternConnect pattern, IEnumerable<SelectedSNote> notesToMove, double ticks, int keys) : base(pattern)
     {
       Ticks = ticks;
       Keys = keys;

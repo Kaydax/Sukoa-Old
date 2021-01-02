@@ -19,8 +19,8 @@ namespace Sukoa.UI
       var menu = new UIMenu("Retard Menu", new IUIComponent[] { new UIMenuItem("Snap Size") });
       var menuBar = new UIMenuBar(new IUIComponent[] { menu });
       pattern.GenNotes();
-      var pianoPattern = new PianoRollPattern(pattern);
-      var canvas = new PianoRollCanvas(gd, imGui, ImGui.GetContentRegionAvail, pianoPattern);
+      var pianoPattern = new MIDIPatternConnect(pattern);
+      var canvas = new MIDIPatternIO(gd, imGui, ImGui.GetContentRegionAvail, pianoPattern);
       var window = new UIWindow("PianoRoll", new UIValueProperty<bool>(true), ImGuiWindowFlags.MenuBar, new IUIComponent[] { menuBar, canvas });
 
       return window;

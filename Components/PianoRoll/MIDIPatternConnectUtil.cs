@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll
 {
-  public partial class PianoRollPattern
+  public partial class MIDIPatternConnect
   {
     public static bool IsNoteInRectangle(SNote note, float key, Rectangle rect)
     {

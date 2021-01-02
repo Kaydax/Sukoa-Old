@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Sukoa.Components.PianoRoll
 {
 
-  public partial class PianoRollPattern
+  public partial class MIDIPatternConnect
   {
     public MIDIPattern Pattern { get; }
 
@@ -24,7 +24,7 @@ namespace Sukoa.Components.PianoRoll
       MaxLeft = 0,
     };
 
-    public PianoRollPattern(MIDIPattern pattern)
+    public MIDIPatternConnect(MIDIPattern pattern)
     {
       Pattern = pattern;
     }

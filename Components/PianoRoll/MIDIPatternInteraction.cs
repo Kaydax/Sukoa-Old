@@ -24,19 +24,19 @@ namespace Sukoa.Components
 
   interface IPianoRollPatternInteraction : IPianoRollInteraction
   {
-    PianoRollPattern PianoRollPattern { get; }
+    MIDIPatternConnect PianoRollPattern { get; }
   }
 
 
 
-  abstract class PianoRollInteraction : IPianoRollPatternInteraction
+  abstract class MIDIPatternInteraction : IPianoRollPatternInteraction
   {
-    protected PianoRollInteraction(PianoRollPattern pianoRollPattern)
+    protected MIDIPatternInteraction(MIDIPatternConnect pianoRollPattern)
     {
       PianoRollPattern = pianoRollPattern;
     }
 
-    public PianoRollPattern PianoRollPattern { get; }
+    public MIDIPatternConnect PianoRollPattern { get; }
 
     public IPianoRollInteraction? NextInteraction { get; private set; }
 

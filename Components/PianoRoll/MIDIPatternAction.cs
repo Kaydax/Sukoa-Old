@@ -19,12 +19,12 @@ namespace Sukoa.Components.PianoRoll
     void Undo();
   }
 
-  public abstract class PianoRollAction : IPianoRollAction
+  public abstract class MIDIPatternAction : IPianoRollAction
   {
     public bool Applied { get; private set; } = false;
-    public PianoRollPattern PianoRollPattern { get; }
+    public MIDIPatternConnect PianoRollPattern { get; }
 
-    public PianoRollAction(PianoRollPattern pattern)
+    public MIDIPatternAction(MIDIPatternConnect pattern)
     {
       PianoRollPattern = pattern;
     }
