@@ -1,4 +1,5 @@
 ﻿using ImGuiNET;
+using Sukoa.MIDI;
 using Sukoa.Util;
 using System;
 using System.Collections.Generic;

@@ -1,5 +1,6 @@
 ﻿using Sukoa.MIDI;
 using Sukoa.Util;
+using Sukoa.Util.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,79 +9,49 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll.Actions
 {
-  // public class PianoRollActionMoveNotes : PianoRollAction
-  // {
-  //   public List<SelectedSNote> NotesToMove { get; }
+  public class PianoRollActionMoveNotes : PianoRollAction
+  {
+    public double Ticks { get; }
+    public int Keys { get; }
 
-  //   public double Ticks { get; }
-  //   public int Keys { get; }
+    PerKeyArray<HashSet<int>> NoteLocations { get; set; }
 
-  //   int[][] NoteLocations { get; set; }
+    public PianoRollActionMoveNotes(PianoRollPattern pattern, IEnumerable<SelectedSNote> notesToMove, double ticks, int keys) : base(pattern)
+    {
+      Ticks = ticks;
+      Keys = keys;
 
-  //   public PianoRollActionMoveNotes(PianoRollPattern pattern, IEnumerable<SelectedSNote> notesToMove, double ticks, int keys) : base(pattern)
-  //   {
-  //     NotesToMove = new List<SelectedSNote>(notesToMove);
-  //     Ticks = ticks;
-  //     Keys = keys;
+      NoteLocations = PianoRollPattern.Pattern.GetNoteLocations(notesToMove);
+    }
 
-  //     var separatedSelection = SUtil.CreatePerKeyItemArray(() => new HashSet<SNote>());
-  //     foreach(var n in NotesToMove)
-  //     {
-  //       separatedSelection[n.Key].Add(n.Note);
-  //     }
+    PerKeyArray<HashSet<int>> MoveNotes(double xOffset, int keyOffset, PerKeyArray<HashSet<int>> selectedNotes)
+    {
+      var pattern = PianoRollPattern.Pattern;
 
-  //     var locations = SUtil.CreatePerKeyItemArray(() => new List<int>());
-  //   }
+      var notesToMove = pattern.FetchSelectedNotes(selectedNotes);
+      pattern.RemoveSelectedNotes(notesToMove);
+      var shiftedNotes = notesToMove.Roll(keyOffset).MapParallel(k =>
+      {
+        foreach(var n in k) n.Start += xOffset;
+        return k.AsEnumerable();
+      });
+      pattern.InjectNotes(shiftedNotes);
 
-  //   protected override void ApplyInternal()
-  //   {
-  //     double xOffset = Ticks;
-  //     int keyOffset = Keys;
+      var editedSelection = shiftedNotes.ToSelectedSNotes();
+      PianoRollPattern.DeselectAllNotes();
+      PianoRollPattern.SelectNoteRange(editedSelection);
 
-  //     var pattern = PianoRollPattern.Pattern;
+      return pattern.GetNoteLocations(shiftedNotes);
+    }
 
-  //     var separatedSelection = new HashSet<SNote>[256];
-  //     for(int i = 0; i < separatedSelection.Length; i++) separatedSelection[i] = new HashSet<SNote>();
+    protected override void ApplyInternal()
+    {
+      NoteLocations = MoveNotes(Ticks, Keys, NoteLocations);
+    }
 
-  //     foreach(var n in NotesToMove)
-  //     {
-  //       separatedSelection[n.Key].Add(n.Note);
-  //     }
-
-  //     Parallel.For(0, 256, i =>
-  //     {
-  //       var newSelection = Enumerable.Empty<SNote>();
-  //       var newSelectionCount = 0;
-  //       var offsettedKey = i - keyOffset;
-  //       if(offsettedKey >= 0 && offsettedKey < 256)
-  //       {
-  //         newSelectionCount = separatedSelection[offsettedKey].Count;
-  //         newSelection = separatedSelection[offsettedKey].Select(n =>
-  //         {
-  //           n.Start += xOffset;
-  //           return n;
-  //         });
-  //       }
-  //       var prevSelection = separatedSelection[i];
-
-  //       if(prevSelection.Count == 0 && newSelectionCount == 0) return;
-
-  //       pattern.Notes[i] = pattern.Notes[i].Where(n => !prevSelection.Contains(n)).Concat(newSelection).ToList();
-
-  //       if(newSelectionCount != 0)
-  //       {
-  //         pattern.Notes[i].Sort();
-  //       }
-  //     });
-
-  //     var editedSelection = NotesToMove.Select(n => new SelectedSNote(n.Note, n.Key + keyOffset)).ToList();
-  //     PianoRollPattern.DeselectAllNotes();
-  //     PianoRollPattern.SelectNoteRange(editedSelection);
-  //   }
-
-  //   protected override void UndoInternal()
-  //   {
-
-  //   }
-  // }
+    protected override void UndoInternal()
+    {
+      NoteLocations = MoveNotes(-Ticks, -Keys, NoteLocations);
+    }
+  }
 }

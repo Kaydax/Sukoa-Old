@@ -19,5 +19,7 @@ namespace Sukoa.Util
     {
       return CreateItemArray(Constants.KeyCount, create);
     }
+
+    public static bool IsValidKey(int key) => key >= 0 && key < Constants.KeyCount;
   }
 }
