@@ -84,7 +84,7 @@ namespace Sukoa.Components.PianoRoll
       int keyOffset = (int)Math.Round(SelectionOffsetPosEase.TrueOffset.Y);
 
       var action = new MIDIPatternActionMoveNotes(this, SelectedNotes, xOffset, keyOffset);
-      action.Apply();
+      Project.RunAction(action);
 
       ClearSelectionPosOffset();
     }

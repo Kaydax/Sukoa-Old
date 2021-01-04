@@ -10,6 +10,8 @@ using Sukoa.Renderer;
 using System.Diagnostics;
 using Sukoa.Components;
 using Sukoa.MIDI;
+using Sukoa.Components.Project;
+using Sukoa.Components.Common.Hotkeys;
 
 namespace Sukoa
 {
@@ -37,13 +39,16 @@ namespace Sukoa
       var uiwindow = new UIWindow("Abstracted ImGui!", new IUIComponent[] { new UIText("Test Text"), new UICheckbox("Test Checkbox", false) });
       
       var pattern = new MIDIPattern();
-      var pianoRollWindow = UIUtils.CreatePianoRollWindow(pattern, gd, imGui);
+      var projectConnect = new ProjectConnect();
+      var pianoRollWindow = UIUtils.CreatePianoRollWindow(projectConnect, pattern, gd, imGui);
 
       // Initialize imgui UI
       var uihost = dispose.Add(new UIHost(new IUIComponent[] { mainmenu, uiwindow, pianoRollWindow }));
       
       Stopwatch frameTimer = new Stopwatch();
       frameTimer.Start();
+
+      var hotkeys = new HotkeyHandler<GlobalHotkey>();
 
       // Main application loop
       while (view.Exists)
@@ -58,6 +63,10 @@ namespace Sukoa
         // Compute UI elements, render canvases
         uihost.Render(cl);
         ImGui.ShowDemoWindow();
+        hotkeys.Update(true);
+        if(hotkeys.CurrentHotkey == GlobalHotkey.Undo) projectConnect.Undo();
+        if(hotkeys.CurrentHotkey == GlobalHotkey.Redo) projectConnect.Redo();
+        Console.WriteLine(hotkeys.CurrentHotkey);
 
         ImGui.Text(ImGui.GetIO().Framerate.ToString());
 
