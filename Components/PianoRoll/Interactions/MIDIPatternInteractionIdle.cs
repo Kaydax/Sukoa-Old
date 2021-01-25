@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll.Interactions
 {
-  class PianoRollInteractionIdle : PianoRollInteraction
+  class MIDIPatternInteractionIdle : MIDIPatternInteraction
   {
-    public PianoRollInteractionIdle(PianoRollPattern pianoRollPattern) : base(pianoRollPattern)
+    public MIDIPatternInteractionIdle(MIDIPatternConnect pianoRollPattern) : base(pianoRollPattern)
     {
 
     }
@@ -21,7 +21,7 @@ namespace Sukoa.Components.PianoRoll.Interactions
       {
         if(ImGui.IsMouseDown(ImGuiMouseButton.Left))
         {
-          return new PianoRollInteractionMouseDown(PianoRollPattern);
+          return new MIDIPatternInteractionMouseDown(PianoRollPattern);
         }
       }
       return null;

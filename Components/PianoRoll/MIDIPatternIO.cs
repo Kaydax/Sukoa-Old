@@ -18,7 +18,7 @@ using Sukoa.Components.PianoRoll;
 
 namespace Sukoa.Components
 {
-  public class PianoRollCanvas : UICanvas
+  public class MIDIPatternIO : UICanvas
   {
     struct VertexPositionColor
     {
@@ -38,10 +38,10 @@ namespace Sukoa.Components
     ResourceSet MainResourceSet { get; set; }
     Shader[] Shaders { get; set; }
     Pipeline Pipeline { get; set; }
-    PianoRollPattern PatternHandler { get; }
+    MIDIPatternConnect PatternHandler { get; }
 
     IPianoRollInteraction CurrentInteraction { get; set; }
-    public int[] FirstRenderNote { get; } = new int[256];
+    public int[] FirstRenderNote { get; } = new int[Constants.KeyCount];
     public double LastRenderLeft { get; set; } = 0;
 
     const string VertexCode = @"
@@ -76,13 +76,13 @@ namespace Sukoa.Components
 
     DisposeGroup dispose = new DisposeGroup();
 
-    public PianoRollCanvas(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize, PianoRollPattern pattern) : base(gd, view, computeSize)
+    public MIDIPatternIO(GraphicsDevice gd, ImGuiView view, Func<Vector2> computeSize, MIDIPatternConnect pattern) : base(gd, view, computeSize)
     {
       Buffers = new BufferList<VertexPositionColor>[257]; // first buffer for general purpose, others for keys
       for(int i = 0; i < 257; i++)
         Buffers[i] = dispose.Add(new BufferList<VertexPositionColor>(gd, 6 * 2048 * 16, new[] { 0, 3, 2, 0, 2, 1 }));
       PatternHandler = pattern;
-      CurrentInteraction = new PianoRollInteractionIdle(PatternHandler);
+      CurrentInteraction = new MIDIPatternInteractionIdle(PatternHandler);
 
       ProjMatrix = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
       dispose.Add(ProjMatrix);

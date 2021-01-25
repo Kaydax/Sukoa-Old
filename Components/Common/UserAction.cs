@@ -4,25 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sukoa.Components.PianoRoll
+namespace Sukoa.Components.Common
 {
-  public interface IPianoRollAction
-  {
-    bool Applied { get; }
-
-    void Apply();
-    void Undo();
-  }
-
-  public abstract class PianoRollAction : IPianoRollAction
+  public abstract class UserAction : IUserAction
   {
     public bool Applied { get; private set; } = false;
-    public PianoRollPattern PianoRollPattern { get; }
-
-    public PianoRollAction(PianoRollPattern pattern)
-    {
-      PianoRollPattern = pattern;
-    }
 
     public void Apply()
     {

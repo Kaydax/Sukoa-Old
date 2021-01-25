@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll.Interactions
 {
-  class PianoRollInteractionMoveSelectedNotes : PianoRollInteraction
+  class MIDIPatternInteractionMoveSelectedNotes : MIDIPatternInteraction
   {
     Vector2d StartLocation { get; }
 
-    public PianoRollInteractionMoveSelectedNotes(PianoRollPattern pianoRollPattern, Vector2d startLocation) : base(pianoRollPattern)
+    public MIDIPatternInteractionMoveSelectedNotes(MIDIPatternConnect pianoRollPattern, Vector2d startLocation) : base(pianoRollPattern)
     {
       StartLocation = startLocation;
     }
@@ -29,7 +29,7 @@ namespace Sukoa.Components.PianoRoll.Interactions
       {
         PianoRollPattern.ApplySelectionPosOffset();
 
-        return new PianoRollInteractionIdle(PianoRollPattern);
+        return new MIDIPatternInteractionIdle(PianoRollPattern);
       }
       return null;
     }

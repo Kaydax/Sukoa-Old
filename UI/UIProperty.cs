@@ -8,6 +8,9 @@ namespace Sukoa.UI
 {
   public class UIProperty<T>
   {
+    public static implicit operator UIProperty<T>(T val) => new UIValueProperty<T>(val);
+    public static implicit operator T(UIProperty<T> property) => property.Value;
+
     private Action<T> set;
 
     public UIProperty(Func<T> get, Action<T> set)
@@ -16,6 +19,9 @@ namespace Sukoa.UI
       this.set = set;
       Set = set;
     }
+
+    public UIProperty(Func<T> get) : this(get, v => throw new NotSupportedException())
+    { }
 
     public event EventHandler<T>? ValueChanged;
 

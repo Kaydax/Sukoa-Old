@@ -8,37 +8,7 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll
 {
-  public struct SelectedSNote
-  {
-    public SelectedSNote(SNote note, int key)
-    {
-      Note = note;
-      Key = key;
-    }
-
-    public SNote Note { get; }
-    public int Key { get; }
-
-    public static bool operator ==(SelectedSNote a, SelectedSNote b) => a.Equals(b);
-    public static bool operator !=(SelectedSNote a, SelectedSNote b) => !a.Equals(b);
-
-    public override bool Equals(object? obj)
-    {
-      return obj is SelectedSNote note && EqualityComparer<SNote>.Default.Equals(Note, note.Note);
-    }
-
-    public override int GetHashCode()
-    {
-      return Note.GetHashCode();
-    }
-
-    public Rectangle GetBoundsRectangle()
-    {
-      return new Rectangle(Key, Note.End, Key + 1, Note.Start);
-    }
-  }
-
-  public partial class PianoRollPattern
+  public partial class MIDIPatternConnect
   {
     HashSet<SelectedSNote> SelectedNotesHashset { get; } = new HashSet<SelectedSNote>();
     public IEnumerable<SelectedSNote> SelectedNotes => SelectedNotesHashset;

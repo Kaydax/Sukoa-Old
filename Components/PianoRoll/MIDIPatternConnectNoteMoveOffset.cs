@@ -1,5 +1,6 @@
 ﻿using Sukoa.MIDI;
 using Sukoa.Util;
+using Sukoa.Components.PianoRoll.Actions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll
 {
-  public partial class PianoRollPattern
+  public partial class MIDIPatternConnect
   {
     class SelectionDragOffset
     {
@@ -82,46 +83,8 @@ namespace Sukoa.Components.PianoRoll
       double xOffset = SelectionOffsetPosEase.TrueOffset.X;
       int keyOffset = (int)Math.Round(SelectionOffsetPosEase.TrueOffset.Y);
 
-      var separatedSelection = new HashSet<SNote>[256];
-      for(int i = 0; i < separatedSelection.Length; i++) separatedSelection[i] = new HashSet<SNote>();
-
-      foreach(var n in SelectedNotesHashset)
-      {
-        separatedSelection[n.Key].Add(n.Note);
-      }
-
-      Parallel.For(0, 256, i =>
-      {
-        var newSelection = Enumerable.Empty<SNote>();
-        var newSelectionCount = 0;
-        var offsettedKey = i - keyOffset;
-        if(offsettedKey >= 0 && offsettedKey < 256)
-        {
-          newSelectionCount = separatedSelection[offsettedKey].Count;
-          newSelection = separatedSelection[offsettedKey].Select(n =>
-          {
-            n.Start += xOffset;
-            return n;
-          });
-        }
-        var prevSelection = separatedSelection[i];
-
-        if(prevSelection.Count == 0 && newSelectionCount == 0) return;
-
-        Pattern.Notes[i] = Pattern.Notes[i].Where(n => !prevSelection.Contains(n)).Concat(newSelection).ToList();
-
-        if(newSelectionCount != 0)
-        {
-          Pattern.Notes[i].Sort();
-        }
-      });
-
-      var editedSelection = SelectedNotesHashset.Select(n => new SelectedSNote(n.Note, n.Key + keyOffset)).ToList();
-      DeselectAllNotes();
-      foreach(var n in editedSelection)
-      {
-        SelectNote(n);
-      }
+      var action = new MIDIPatternActionMoveNotes(this, SelectedNotes, xOffset, keyOffset);
+      Project.RunAction(action);
 
       ClearSelectionPosOffset();
     }

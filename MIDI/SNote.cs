@@ -58,4 +58,49 @@ namespace Sukoa.MIDI
       return obj is SNote n ? Start.CompareTo(n.Start) : 0;
     }
   }
+
+  public struct SelectedSNote
+  {
+    public SelectedSNote(SNote note, int key)
+    {
+      Note = note;
+      Key = key;
+    }
+
+    public SNote Note { get; }
+    public int Key { get; }
+
+    public static bool operator ==(SelectedSNote a, SelectedSNote b) => a.Equals(b);
+    public static bool operator !=(SelectedSNote a, SelectedSNote b) => !a.Equals(b);
+
+    public override bool Equals(object? obj)
+    {
+      return obj is SelectedSNote note && EqualityComparer<SNote>.Default.Equals(Note, note.Note);
+    }
+
+    public override int GetHashCode()
+    {
+      return Note.GetHashCode();
+    }
+
+    public Rectangle GetBoundsRectangle()
+    {
+      return new Rectangle(Key, Note.End, Key + 1, Note.Start);
+    }
+  }
+
+  public static class SelectedSNoteExtension
+  {
+    public static IEnumerable<SelectedSNote> ToSelectedSNotes(this PerKeyArray<IEnumerable<SNote>> notes)
+    {
+      for(int i = 0; i < notes.Length; i++)
+      {
+        var key = notes[i];
+        foreach(var n in key)
+        {
+          yield return new SelectedSNote(n, i);
+        }
+      }
+    }
+  }
 }

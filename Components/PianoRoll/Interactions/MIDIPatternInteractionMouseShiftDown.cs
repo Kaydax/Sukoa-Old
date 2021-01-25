@@ -1,4 +1,5 @@
 ﻿using ImGuiNET;
+using Sukoa.MIDI;
 using Sukoa.Util;
 using System;
 using System.Collections.Generic;
@@ -9,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace Sukoa.Components.PianoRoll.Interactions
 {
-  class PianoRollInteractionMouseShiftDown : PianoRollInteraction
+  class MIDIPatternInteractionMouseShiftDown : MIDIPatternInteraction
   {
     Vector2d ClickLocation { get; }
     SelectedSNote? ClickedNote { get; }
 
-    public PianoRollInteractionMouseShiftDown(PianoRollPattern pianoRollPattern) : base(pianoRollPattern)
+    public MIDIPatternInteractionMouseShiftDown(MIDIPatternConnect pianoRollPattern) : base(pianoRollPattern)
     {
       ClickLocation = GetMousePos();
       ClickedNote = PianoRollPattern.GetNoteAtLocation(ClickLocation);
@@ -38,11 +39,11 @@ namespace Sukoa.Components.PianoRoll.Interactions
       base.DoInteraction();
       if(!ImGui.IsMouseDown(ImGuiMouseButton.Left))
       {
-        return new PianoRollInteractionIdle(PianoRollPattern);
+        return new MIDIPatternInteractionIdle(PianoRollPattern);
       }
       if(ClickLocation != GetMousePos())
       {
-        return new PianoRollInteractionSelectionRectangle(PianoRollPattern, ClickLocation);
+        return new MIDIPatternInteractionSelectionRectangle(PianoRollPattern, ClickLocation);
       }
       return null;
     }
