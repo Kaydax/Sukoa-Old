@@ -56,6 +56,7 @@ namespace Sukoa
         cl.Begin();
 
         // Compute UI elements, render canvases
+        ImGui.DockSpaceOverViewport();
         uihost.Render(cl);
         ImGui.ShowDemoWindow();
 
